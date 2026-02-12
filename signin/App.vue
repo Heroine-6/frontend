@@ -41,6 +41,12 @@
         </button>
       </form>
 
+      <div class="divider"><span>또는</span></div>
+
+      <a :href="kakaoLoginUrl" class="kakao-login-btn">
+        <img src="/kakao_login_medium_narrow.png" alt="카카오 로그인" />
+      </a>
+
       <p class="auth-link">
         계정이 없으신가요? <a href="/signup">회원가입</a>
       </p>
@@ -49,9 +55,13 @@
 </template>
 
 <script setup>
-import { reactive, ref } from 'vue'
-import { authSignIn } from '../shared/api.js'
+import { reactive, ref, onMounted } from 'vue'
+import { authSignIn, kakaoLogin } from '../shared/api.js'
 import { validateEmail, validatePassword } from '../shared/validators.js'
+
+const KAKAO_CLIENT_ID = import.meta.env.VITE_KAKAO_CLIENT_ID || ''
+const KAKAO_REDIRECT_URI = import.meta.env.VITE_KAKAO_REDIRECT_URI || ''
+const kakaoLoginUrl = `https://kauth.kakao.com/oauth/authorize?client_id=${KAKAO_CLIENT_ID}&redirect_uri=${encodeURIComponent(KAKAO_REDIRECT_URI)}&response_type=code`
 
 const form = reactive({ email: '', password: '' })
 const errors = reactive({ email: '', password: '' })
@@ -82,11 +92,35 @@ async function handleSubmit() {
     const { accessToken, refreshToken } = res.data
     localStorage.setItem('accessToken', accessToken)
     localStorage.setItem('refreshToken', refreshToken)
-    window.location.href = '/budongbudong'
+    window.location.href = '/'
   } catch (e) {
     errorMsg.value = e.message
   } finally {
     loading.value = false
   }
 }
+
+onMounted(async () => {
+  const params = new URLSearchParams(window.location.search)
+  const code = params.get('code')
+  if (!code) return
+
+  loading.value = true
+  errorMsg.value = ''
+  try {
+    const res = await kakaoLogin(code)
+    const { accessToken, refreshToken, profileComplete } = res.data
+    localStorage.setItem('accessToken', accessToken)
+    localStorage.setItem('refreshToken', refreshToken)
+    if (!profileComplete) {
+      window.location.href = '/kakao-complete.html'
+    } else {
+      window.location.href = '/'
+    }
+  } catch (e) {
+    errorMsg.value = e.message
+  } finally {
+    loading.value = false
+  }
+})
 </script>

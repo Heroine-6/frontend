@@ -5,8 +5,8 @@
       <div class="header-inner">
         <a href="/" class="logo">부동부동</a>
         <nav class="header-nav">
-          <a href="/search.html" class="btn-text">매물 검색</a>
-          <a href="/mypage.html" class="btn-text">마이페이지</a>
+          <a href="/search" class="btn-text">매물 검색</a>
+          <a href="/mypage" class="btn-text">마이페이지</a>
           <span class="user-greeting">{{ userName }}님</span>
           <button class="btn-text" @click="logout">로그아웃</button>
         </nav>

@@ -35,6 +35,11 @@ async function request(url, options = {}) {
     throw new Error('인증이 만료되었습니다.')
   }
 
+  // 204 No Content
+  if (res.status === 204) {
+    return { success: true, data: null }
+  }
+
   const data = await res.json()
   if (!res.ok || !data.success) {
     throw new Error(data.message || '요청에 실패했습니다.')

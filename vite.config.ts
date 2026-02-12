@@ -53,7 +53,8 @@ export default defineConfig(({ mode }) => {
           'market-prices': resolve(__dirname, 'market-prices.html'),
           'my-properties': resolve(__dirname, 'my-properties.html'),
           'create-auction': resolve(__dirname, 'create-auction.html'),
-          'kakao-complete': resolve(__dirname, 'kakao-complete.html')
+          'kakao-complete': resolve(__dirname, 'kakao-complete.html'),
+          'create-property': resolve(__dirname, 'create-property.html')
         }
       }
     }

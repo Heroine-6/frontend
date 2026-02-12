@@ -445,7 +445,7 @@ function viewDetail(propertyId) {
 }
 
 function goRegister() {
-  alert('매물 등록 페이지 (구현 예정)')
+  window.location.href = '/create-property.html'
 }
 
 // ====== 유틸 ======

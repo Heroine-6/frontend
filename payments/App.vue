@@ -17,7 +17,7 @@
     <div class="payments-container">
       <div class="payments-inner">
         <div class="page-header">
-          <h1 class="page-title">결제 내역</h1>
+          <h1 class="page-title">💳 결제 내역</h1>
           <p class="page-subtitle">모든 결제 내역을 확인하세요</p>
         </div>
 

@@ -1,4 +1,4 @@
-ㅁ<template>
+<template>
   <div class="page">
     <!-- 헤더 -->
     <header class="header">

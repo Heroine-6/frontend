@@ -9,7 +9,23 @@ export default defineConfig(({ mode }) => {
   console.log('backendHost:', backendHost)
 
   return {
-    plugins: [vue()],
+    plugins: [
+      vue(),
+      {
+        name: 'kakao-oauth-redirect',
+        configureServer(server) {
+          server.middlewares.use((req, res, next) => {
+            if (req.url?.startsWith('/login/oauth2/code/kakao')) {
+              const query = req.url.split('?')[1] || ''
+              res.writeHead(302, { Location: `/signin.html${query ? '?' + query : ''}` })
+              res.end()
+              return
+            }
+            next()
+          })
+        }
+      }
+    ],
     server: {
       proxy: {
         '/api': {
@@ -36,7 +52,8 @@ export default defineConfig(({ mode }) => {
           payments: resolve(__dirname, 'payments.html'),
           'market-prices': resolve(__dirname, 'market-prices.html'),
           'my-properties': resolve(__dirname, 'my-properties.html'),
-          'create-auction': resolve(__dirname, 'create-auction.html')
+          'create-auction': resolve(__dirname, 'create-auction.html'),
+          'kakao-complete': resolve(__dirname, 'kakao-complete.html')
         }
       }
     }

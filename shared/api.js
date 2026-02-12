@@ -45,37 +45,66 @@ async function request(url, options = {}) {
 // ==================== 인증 API ====================
 
 export function authSignIn({ email, password }) {
-  return request('/api/v1/auth/signin', {
+  return request('/api/auth/v1/signin', {
     method: 'POST',
     body: { email, password }
   })
 }
 
 export function authSignUp({ email, name, password, phone, address, role }) {
-  return request('/api/v1/auth/signup', {
+  return request('/api/auth/v1/signup', {
     method: 'POST',
     body: { email, name, password, phone, address, role }
   })
 }
 
 export function smsSend(toNumber) {
-  return request('/api/v1/auth/send', {
+  return request('/api/auth/v1/send', {
     method: 'POST',
     body: { toNumber }
   })
 }
 
 export function smsVerify(toNumber, code) {
-  return request('/api/v1/auth/verify', {
+  return request('/api/auth/v1/verify', {
     method: 'POST',
     body: { toNumber, code }
   })
 }
 
 export function authRefresh(refreshToken) {
-  return request('/api/v1/auth/refresh', {
+  return request('/api/auth/v1/refresh', {
     method: 'POST',
     body: { refreshToken }
+  })
+}
+
+// ==================== 카카오 OAuth ====================
+
+export async function kakaoLogin(code) {
+  const res = await fetch(`/api/auth/v2/kakao?code=${encodeURIComponent(code)}`)
+  const data = await res.json()
+  if (!res.ok || !data.success) {
+    throw new Error(data.message || '카카오 로그인에 실패했습니다.')
+  }
+  return data
+}
+
+export function completeKakaoProfile(phone, address) {
+  const token = localStorage.getItem('accessToken')
+  return fetch('/api/auth/v2/kakao/complete', {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': token,
+    },
+    body: JSON.stringify({ phone, address }),
+  }).then(async res => {
+    const data = await res.json()
+    if (!res.ok || !data.success) {
+      throw new Error(data.message || '프로필 저장에 실패했습니다.')
+    }
+    return data
   })
 }
 

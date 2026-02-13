@@ -49,7 +49,7 @@
           </div>
           <div v-else-if="auctionStatus === 'SCHEDULED'" class="countdown-section">
             <div class="countdown-title">경매 시작까지</div>
-            <div class="countdown-display countdown-scheduled">
+            <div class="countdown-display">
               <div v-if="timeUntilStart.days > 0" class="countdown-unit">
                 <div class="countdown-number">{{ String(timeUntilStart.days).padStart(2, '0') }}</div>
                 <div class="countdown-label">DAYS</div>

@@ -344,7 +344,6 @@ export function linkKakao(code, redirectUri) {
       requireAuth: true
   })
 }
-}
 
 // ==================== 채팅 API ====================
 

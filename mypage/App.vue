@@ -67,6 +67,29 @@
           <div class="main-card">
             <h2 class="card-title">알림</h2>
             <div class="card-content">
+              <!-- 카카오 연동 -->
+              <div class="kakao-link-section">
+                <div v-if="kakaoLinkSuccess" class="alert-banner success">
+                  카카오 계정이 연동되었습니다!
+                </div>
+                <div v-if="kakaoLinkError" class="alert-banner error">
+                  {{ kakaoLinkError }}
+                </div>
+                <div class="toggle-info" style="margin-bottom: 12px">
+                  <span class="toggle-label">카카오톡 연동</span>
+                  <span class="toggle-desc">연동하면 카카오톡으로 알림을 받을 수 있어요</span>
+                </div>
+                <div v-if="kakaoLinked" class="kakao-linked-badge">
+                  <span class="linked-dot"></span> 연동 완료
+                </div>
+                <button v-else class="btn-kakao" :disabled="kakaoLinking" @click="startKakaoLink">
+                  <svg class="kakao-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3C6.48 3 2 6.58 2 10.94c0 2.8 1.86 5.27 4.66 6.67-.15.56-.96 3.6-.99 3.83 0 0-.02.17.09.24.11.06.24.01.24.01.32-.04 3.7-2.44 4.28-2.86.55.08 1.13.12 1.72.12 5.52 0 10-3.58 10-7.94C22 6.58 17.52 3 12 3"/></svg>
+                  {{ kakaoLinking ? '연동 중...' : '카카오 계정 연동하기' }}
+                </button>
+              </div>
+
+              <div class="section-divider"></div>
+
               <!-- 알림 수신 동의 -->
               <div class="notification-toggle">
                 <div class="toggle-info">
@@ -116,7 +139,9 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { getMyNotifications } from '../shared/api.js'
+import { getMyNotifications, linkKakao } from '../shared/api.js'
+
+const KAKAO_CLIENT_ID = '9134d431a52486f652c7c83e9156d009'
 
 // 사용자 정보
 const userName = ref('')
@@ -124,6 +149,12 @@ const isSeller = ref(false)
 
 // 채팅 서버 URL
 const chatServerUrl = 'https://chat.budongbudong.com'
+
+// 카카오 연동
+const kakaoLinked = ref(false)
+const kakaoLinking = ref(false)
+const kakaoLinkSuccess = ref(false)
+const kakaoLinkError = ref('')
 
 // 알림 관련
 const notificationEnabled = ref(true)
@@ -159,6 +190,13 @@ onMounted(async () => {
     }
   } catch (e) {
     console.error('토큰 파싱 실패:', e)
+  }
+
+  // URL에 code 파라미터가 있으면 카카오 연동 처리
+  const urlParams = new URLSearchParams(window.location.search)
+  const code = urlParams.get('code')
+  if (code) {
+    await handleKakaoCallback(code)
   }
 
   // 알림 내역 불러오기
@@ -208,6 +246,30 @@ function goToChatServer() {
 function toggleNotification() {
   console.log('알림 설정:', notificationEnabled.value)
   // TODO: API 호출하여 설정 저장
+}
+
+// 카카오 연동 시작
+function startKakaoLink() {
+  const redirectUri = encodeURIComponent(window.location.origin + '/mypage.html')
+  const url = `https://kauth.kakao.com/oauth/authorize?client_id=${KAKAO_CLIENT_ID}&redirect_uri=${redirectUri}&response_type=code&scope=talk_message`
+  window.location.href = url
+}
+
+// 카카오 콜백 처리
+async function handleKakaoCallback(code) {
+  kakaoLinking.value = true
+  kakaoLinkError.value = ''
+  try {
+    const redirectUri = window.location.origin + '/mypage.html'
+    await linkKakao(code, redirectUri)
+    kakaoLinked.value = true
+    kakaoLinkSuccess.value = true
+  } catch (e) {
+    kakaoLinkError.value = e.message
+  } finally {
+    kakaoLinking.value = false
+    window.history.replaceState({}, '', '/mypage.html')
+  }
 }
 
 // 결제 관리 페이지 (구현 예정)
@@ -402,6 +464,90 @@ function logout() {
 .menu-arrow {
   font-size: 24px;
   color: var(--color-text-secondary);
+}
+
+/* 카카오 연동 */
+.kakao-link-section {
+  padding: 16px;
+  margin-bottom: 16px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+}
+
+.btn-kakao {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #191919;
+  background: #FEE500;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-kakao:hover:not(:disabled) {
+  background: #e6cf00;
+}
+
+.btn-kakao:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.kakao-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.kakao-linked-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  background: #e8f5e9;
+  color: #1b5e20;
+}
+
+.linked-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #2eb67d;
+}
+
+.alert-banner {
+  padding: 10px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+
+.alert-banner.success {
+  background: #e8f5e9;
+  color: #1b5e20;
+  border: 1px solid #a5d6a7;
+}
+
+.alert-banner.error {
+  background: #ffeef0;
+  color: #e5503c;
+  border: 1px solid #f5c6cb;
+}
+
+.section-divider {
+  height: 1px;
+  background: var(--color-border);
+  margin: 16px 0;
 }
 
 /* 알림 토글 */

@@ -310,3 +310,19 @@ export function updateNotificationSettings(settings) {
     requireAuth: true
   })
 }
+
+export async function linkKakao(code, redirectUri) {
+  const token = localStorage.getItem('accessToken')
+  const params = new URLSearchParams({ code })
+  if (redirectUri) params.append('redirectUri', redirectUri)
+
+  const res = await fetch(`/api/users/v2/kakao/link?${params.toString()}`, {
+    method: 'POST',
+    headers: { 'Authorization': token }
+  })
+  const data = await res.json()
+  if (!res.ok || !data.success) {
+    throw new Error(data.message || '카카오 연동에 실패했습니다.')
+  }
+  return data
+}

@@ -311,18 +311,70 @@ export function updateNotificationSettings(settings) {
   })
 }
 
-export async function linkKakao(code, redirectUri) {
-  const token = localStorage.getItem('accessToken')
-  const params = new URLSearchParams({ code })
-  if (redirectUri) params.append('redirectUri', redirectUri)
+// ==================== 채팅 API ====================
 
-  const res = await fetch(`/api/users/v2/kakao/link?${params.toString()}`, {
-    method: 'POST',
-    headers: { 'Authorization': token }
-  })
-  const data = await res.json()
-  if (!res.ok || !data.success) {
-    throw new Error(data.message || '카카오 연동에 실패했습니다.')
+// 채팅 서버 전용 요청 함수 (Bearer 접두사 필요, 응답 형식이 다름)
+async function chatRequest(url, options = {}) {
+  const { method = 'GET', body, headers = {} } = options
+
+  const config = {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+      ...headers
+    }
   }
-  return data
+
+  const token = localStorage.getItem('accessToken')
+  if (token) {
+    config.headers['Authorization'] = token.startsWith('Bearer ') ? token : 'Bearer ' + token
+  }
+
+  if (body) {
+    config.body = JSON.stringify(body)
+  }
+
+  const res = await fetch(url, config)
+
+  if (res.status === 401) {
+    localStorage.removeItem('accessToken')
+    localStorage.removeItem('refreshToken')
+    alert('인증이 만료되었습니다. 다시 로그인해주세요.')
+    window.location.href = '/signin.html'
+    throw new Error('인증이 만료되었습니다.')
+  }
+
+  if (res.status === 204) {
+    return null
+  }
+
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({}))
+    throw new Error(errData.message || '채팅 요청에 실패했습니다.')
+  }
+
+  return res.json()
+}
+
+// 내 채팅방 목록 조회
+export function getChatRooms(page = 0, size = 20) {
+  return chatRequest(`/api/v2/chats/rooms?page=${page}&size=${size}`)
+}
+
+// 매물별 채팅방 존재 여부 확인 (존재하면 { roomId }, 없으면 null)
+export function findChatRoom(propertyId) {
+  return chatRequest(`/api/v2/chats/rooms/open/${propertyId}`)
+}
+
+// 첫 메시지 전송 + 채팅방 생성
+export function sendFirstMessage(propertyId, content) {
+  return chatRequest(`/api/v2/chats/messages/${propertyId}`, {
+    method: 'POST',
+    body: { content }
+  })
+}
+
+// 채팅 메시지 조회
+export function getChatMessages(roomId, page = 0, size = 30) {
+  return chatRequest(`/api/v2/chats/rooms/${roomId}/messages?page=${page}&size=${size}`)
 }

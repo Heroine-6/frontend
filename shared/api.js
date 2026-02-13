@@ -311,6 +311,15 @@ export function updateNotificationSettings(settings) {
   })
 }
 
+export function linkKakao(code, redirectUri) {
+  const params = new URLSearchParams({ code })
+  if (redirectUri) params.append('redirectUri', redirectUri)
+    return request(`/api/users/v2/kakao/link?${params.toString()}`, {
+      method: 'POST',
+      requireAuth: true
+  })
+}
+
 // ==================== 채팅 API ====================
 
 // 채팅 서버 전용 요청 함수 (Bearer 접두사 필요, 응답 형식이 다름)

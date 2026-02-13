@@ -666,7 +666,7 @@ input:checked + .slider:before {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: 6px;
-  transition: background 0.2s;
+  transition: background-color 0.2s;
 }
 
 .notification-item:hover {

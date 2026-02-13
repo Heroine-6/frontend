@@ -441,7 +441,7 @@ async function cancelAuction(item) {
 }
 
 function viewDetail(propertyId) {
-  window.location.href = `/api/v1/properties/${propertyId}`
+  window.location.href = `/property-detail.html?id=${propertyId}`
 }
 
 function goRegister() {

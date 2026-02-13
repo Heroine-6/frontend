@@ -84,7 +84,7 @@
           <a
             v-for="item in properties"
             :key="item.id"
-            :href="'/api/v1/properties/' + item.id"
+            :href="'/api/properties/v1/' + item.id"
             class="property-card"
           >
             <div class="card-thumb">
@@ -206,7 +206,7 @@ async function fetchProperties() {
   try {
     const params = buildSearchParams()
     const useSearch = searchKeyword.value || selectedType.value || selectedStatus.value
-    const endpoint = useSearch ? '/api/v1/properties/search' : '/api/v1/properties'
+    const endpoint = useSearch ? '/api/properties/v1/search' : '/api/properties/v1'
     const res = await fetch(`${endpoint}?${params}`)
     const json = await res.json()
     if (json.success && json.data) {
@@ -226,7 +226,7 @@ async function loadMore() {
   try {
     const params = buildSearchParams()
     const useSearch = searchKeyword.value || selectedType.value || selectedStatus.value
-    const endpoint = useSearch ? '/api/v1/properties/search' : '/api/v1/properties'
+    const endpoint = useSearch ? '/api/properties/v1/search' : '/api/properties/v1'
     const res = await fetch(`${endpoint}?${params}`)
     const json = await res.json()
     if (json.success && json.data) {

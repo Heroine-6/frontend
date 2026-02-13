@@ -122,8 +122,8 @@ import { getMyNotifications } from '../shared/api.js'
 const userName = ref('')
 const isSeller = ref(false)
 
-// 채팅 서버 URL
-const chatServerUrl = 'https://chat.budongbudong.com'
+// 채팅 페이지 경로
+const chatPageUrl = '/chat.html'
 
 // 알림 관련
 const notificationEnabled = ref(true)
@@ -199,9 +199,9 @@ function formatDate(dateStr) {
   return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}`
 }
 
-// 채팅 서버로 이동
+// 채팅 페이지로 이동
 function goToChatServer() {
-  window.open(chatServerUrl, '_blank')
+  window.location.href = chatPageUrl
 }
 
 // 알림 토글

@@ -6,6 +6,7 @@ import { resolve } from 'path'
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
   const backendHost = env.VITE_BACKEND_HOST || 'localhost'
+  const chatServerPort = env.VITE_CHAT_SERVER_PORT || '8081'
   console.log('backendHost:', backendHost)
 
   return {
@@ -28,6 +29,17 @@ export default defineConfig(({ mode }) => {
     ],
     server: {
       proxy: {
+        '/api/v2/chats': {
+          target: `http://localhost:${chatServerPort}`,
+          changeOrigin: true,
+          secure: false
+        },
+        '/ws': {
+          target: `http://localhost:${chatServerPort}`,
+          changeOrigin: true,
+          secure: false,
+          ws: true
+        },
         '/api': {
           target: 'http://localhost:8080',
           changeOrigin: true,
@@ -54,7 +66,8 @@ export default defineConfig(({ mode }) => {
           'my-properties': resolve(__dirname, 'my-properties.html'),
           'create-auction': resolve(__dirname, 'create-auction.html'),
           'kakao-complete': resolve(__dirname, 'kakao-complete.html'),
-          'create-property': resolve(__dirname, 'create-property.html')
+          'create-property': resolve(__dirname, 'create-property.html'),
+          chat: resolve(__dirname, 'chat.html')
         }
       }
     }

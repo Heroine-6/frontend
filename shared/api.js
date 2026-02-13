@@ -116,26 +116,26 @@ export function completeKakaoProfile(phone, address) {
 // ==================== 부동산 API ====================
 
 export function getAllProperties(page = 0, size = 10) {
-  return request(`/api/v1/properties?page=${page}&size=${size}`)
+  return request(`/api/properties/v1?page=${page}&size=${size}`)
 }
 
 export function searchProperties(params) {
   const queryString = new URLSearchParams(params).toString()
-  return request(`/api/v1/properties/search?${queryString}`)
+  return request(`/api/properties/v1/search?${queryString}`)
 }
 
 export function getPropertyDetail(propertyId) {
-  return request(`/api/v1/properties/${propertyId}`)
+  return request(`/api/properties/v1/${propertyId}`)
 }
 
 export function getMyProperties(page = 0, size = 10) {
-  return request(`/api/v1/properties/my?page=${page}&size=${size}`, {
+  return request(`/api/properties/v1/my?page=${page}&size=${size}`, {
     requireAuth: true
   })
 }
 
 export function createProperty(propertyData) {
-  return request('/api/v1/properties', {
+  return request('/api/properties/v1', {
     method: 'POST',
     body: propertyData,
     requireAuth: true
@@ -143,7 +143,7 @@ export function createProperty(propertyData) {
 }
 
 export function updateProperty(propertyId, propertyData) {
-  return request(`/api/v1/properties/${propertyId}`, {
+  return request(`/api/properties/v1/${propertyId}`, {
     method: 'PATCH',
     body: propertyData,
     requireAuth: true
@@ -151,7 +151,7 @@ export function updateProperty(propertyId, propertyData) {
 }
 
 export function deleteProperty(propertyId) {
-  return request(`/api/v1/properties/${propertyId}`, {
+  return request(`/api/properties/v1/${propertyId}`, {
     method: 'DELETE',
     requireAuth: true
   })
@@ -215,7 +215,7 @@ export function getMyBids(page = 0, size = 10, status = null) {
 
 export function getNearbyRealDeals(params) {
   const queryString = new URLSearchParams(params).toString()
-  return request(`/api/v2/real-deals/nearby?${queryString}`)
+  return request(`/api/real-deals/v2/nearby?${queryString}`)
 }
 
 // ==================== 지역 데이터 (정적 JSON) ====================
@@ -253,7 +253,7 @@ export function getMarketPrices(params) {
   const address = [sido, gugun, dong].filter(Boolean).join(' ')
   const query = { address, size: 50 }
   if (type) query.propertyType = type
-  return request(`/api/v2/real-deals/nearby?${new URLSearchParams(query).toString()}`)
+  return request(`/api/real-deals/v2/nearby?${new URLSearchParams(query).toString()}`)
 }
 
 // ==================== 결제 API ====================
@@ -308,7 +308,7 @@ export async function getPresignedUrls(files) {
     fileName: file.name,
     contentType: file.type
   }))
-  return request('/api/v1/properties/images/presign', {
+  return request('/api/properties/v1/images/presign', {
     method: 'POST',
     body: { files: fileInfos },
     requireAuth: true

@@ -66,7 +66,8 @@ export default defineConfig(({ mode }) => {
           'create-auction': resolve(__dirname, 'create-auction.html'),
           'kakao-complete': resolve(__dirname, 'kakao-complete.html'),
           'create-property': resolve(__dirname, 'create-property.html'),
-          chat: resolve(__dirname, 'chat.html')
+          chat: resolve(__dirname, 'chat.html'),
+          'auction-detail': resolve(__dirname, 'auction-detail.html')
         }
       }
     }

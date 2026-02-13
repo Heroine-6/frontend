@@ -192,7 +192,7 @@
           <a
             v-for="item in properties"
             :key="item.id"
-            :href="'/api/v1/properties/' + item.id"
+            :href="'/api/properties/v1/' + item.id"
             class="list-card"
           >
             <div class="list-thumb">
@@ -394,7 +394,7 @@ async function doSearch() {
   updateUrl()
   try {
     const params = buildParams()
-    const res = await fetch(`/api/v1/properties/search?${params}`)
+    const res = await fetch(`/api/properties/v1/search?${params}`)
     const json = await res.json()
     if (json.success && json.data) {
       properties.value = json.data.content || []
@@ -412,7 +412,7 @@ async function loadMore() {
   page.value++
   try {
     const params = buildParams()
-    const res = await fetch(`/api/v1/properties/search?${params}`)
+    const res = await fetch(`/api/properties/v1/search?${params}`)
     const json = await res.json()
     if (json.success && json.data) {
       properties.value.push(...(json.data.content || []))

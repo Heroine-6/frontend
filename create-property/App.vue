@@ -384,7 +384,7 @@ async function lookupProperty() {
   lookingUp.value = true
   try {
     const token = localStorage.getItem('accessToken')
-    const res = await fetch('/api/v1/properties/lookup', {
+    const res = await fetch('/api/properties/v1/lookup', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -495,7 +495,7 @@ async function submitProperty() {
     const params = new URLSearchParams()
     imageFileUrls.forEach(url => params.append('imageUrls', url))
     const queryString = params.toString()
-    const url = '/api/v1/properties' + (queryString ? '?' + queryString : '')
+    const url = '/api/properties/v1' + (queryString ? '?' + queryString : '')
 
     const res = await fetch(url, {
       method: 'POST',

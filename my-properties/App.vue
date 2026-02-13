@@ -227,10 +227,16 @@
                       경매 취소
                     </button>
                     <button
+                      class="btn-action btn-action-secondary"
+                      @click="viewAuctionDetail(item.auction.id)"
+                    >
+                      경매 상세
+                    </button>
+                    <button
                       class="btn-action btn-action-outline"
                       @click="viewDetail(item.id)"
                     >
-                      상세보기
+                      매물 상세
                     </button>
                   </template>
                 </div>
@@ -440,8 +446,14 @@ async function cancelAuction(item) {
   }
 }
 
+// 경매 상세 페이지로 이동
+function viewAuctionDetail(auctionId) {
+  window.location.href = `/auction-detail.html?id=${auctionId}`
+}
+
+// 매물 상세 페이지로 이동
 function viewDetail(propertyId) {
-  window.location.href = `/api/v1/properties/${propertyId}`
+  window.location.href = `/api/properties/v1/${propertyId}`
 }
 
 function goRegister() {
@@ -863,6 +875,13 @@ function logout() {
 .btn-action-primary:hover {
   background: var(--color-primary-hover);
 }
+.btn-action-secondary {
+  background: #f0f7ff;
+  color: var(--color-primary);
+}
+.btn-action-secondary:hover {
+  background: #e6f2ff;
+}
 .btn-action-danger {
   background: var(--color-error);
   color: #fff;
@@ -952,10 +971,12 @@ function logout() {
   }
   .card-actions {
     width: 100%;
+    flex-wrap: wrap;
   }
   .btn-action {
     flex: 1;
     text-align: center;
+    min-width: 100px;
   }
   .header-nav { gap: 4px; }
   .btn-text { font-size: 13px; padding: 6px 8px; }

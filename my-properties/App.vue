@@ -453,7 +453,11 @@ function viewAuctionDetail(auctionId) {
 
 // 매물 상세 페이지로 이동
 function viewDetail(propertyId) {
+<<<<<<< HEAD
   window.location.href = `/api/properties/v1/${propertyId}`
+=======
+  window.location.href = `/property-detail.html?id=${propertyId}`
+>>>>>>> 13724d24bcd9b043c7d01204fe000779f6f4e588
 }
 
 function goRegister() {

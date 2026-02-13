@@ -215,7 +215,7 @@ export function getMyBids(page = 0, size = 10, status = null) {
 
 export function getNearbyRealDeals(params) {
   const queryString = new URLSearchParams(params).toString()
-  return request(`/api/v2/real-deals/nearby?${queryString}`)
+  return request(`/api/real-deals/v2/nearby?${queryString}`)
 }
 
 // ==================== 지역 데이터 (정적 JSON) ====================
@@ -253,7 +253,7 @@ export function getMarketPrices(params) {
   const address = [sido, gugun, dong].filter(Boolean).join(' ')
   const query = { address, size: 50 }
   if (type) query.propertyType = type
-  return request(`/api/v2/real-deals/nearby?${new URLSearchParams(query).toString()}`)
+  return request(`/api/real-deals/v2/nearby?${new URLSearchParams(query).toString()}`)
 }
 
 // ==================== 결제 API ====================
@@ -344,7 +344,10 @@ export function linkKakao(code, redirectUri) {
       requireAuth: true
   })
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> 13724d24bcd9b043c7d01204fe000779f6f4e588
 
 // ==================== 채팅 API ====================
 

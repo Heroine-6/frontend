@@ -192,7 +192,11 @@
           <a
             v-for="item in properties"
             :key="item.id"
+<<<<<<< HEAD
             :href="'/api/properties/v1/' + item.id"
+=======
+            :href="'/property-detail.html?id=' + item.id"
+>>>>>>> 13724d24bcd9b043c7d01204fe000779f6f4e588
             class="list-card"
           >
             <div class="list-thumb">

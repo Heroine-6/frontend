@@ -301,6 +301,31 @@ export function getMyNotifications(page = 0, size = 10) {
   })
 }
 
+// ==================== 이미지 Presigned URL ====================
+
+export async function getPresignedUrls(files) {
+  const fileInfos = files.map(file => ({
+    fileName: file.name,
+    contentType: file.type
+  }))
+  return request('/api/v1/properties/images/presign', {
+    method: 'POST',
+    body: { files: fileInfos },
+    requireAuth: true
+  })
+}
+
+export async function uploadFileToPresignedUrl(uploadUrl, file) {
+  const res = await fetch(uploadUrl, {
+    method: 'PUT',
+    headers: { 'Content-Type': file.type },
+    body: file
+  })
+  if (!res.ok) {
+    throw new Error(`이미지 업로드에 실패했습니다. (${res.status})`)
+  }
+}
+
 // ==================== 사용자 API ====================
 
 export function updateNotificationSettings(settings) {
@@ -318,6 +343,7 @@ export function linkKakao(code, redirectUri) {
       method: 'POST',
       requireAuth: true
   })
+}
 }
 
 // ==================== 채팅 API ====================

@@ -336,20 +336,14 @@ export function updateNotificationSettings(settings) {
   })
 }
 
-export async function linkKakao(code, redirectUri) {
-  const token = localStorage.getItem('accessToken')
+export function linkKakao(code, redirectUri) {
   const params = new URLSearchParams({ code })
   if (redirectUri) params.append('redirectUri', redirectUri)
-
-  const res = await fetch(`/api/users/v2/kakao/link?${params.toString()}`, {
-    method: 'POST',
-    headers: { 'Authorization': token }
+    return request(`/api/users/v2/kakao/link?${params.toString()}`, {
+      method: 'POST',
+      requireAuth: true
   })
-  const data = await res.json()
-  if (!res.ok || !data.success) {
-    throw new Error(data.message || '카카오 연동에 실패했습니다.')
-  }
-  return data
+}
 }
 
 // ==================== 채팅 API ====================

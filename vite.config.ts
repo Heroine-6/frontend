@@ -5,9 +5,8 @@ import { resolve } from 'path'
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
-  const backendHost = env.VITE_BACKEND_HOST || 'localhost'
-  const chatServerPort = env.VITE_CHAT_SERVER_PORT || '8081'
-  console.log('backendHost:', backendHost)
+  const mainServer = env.VITE_MAIN_SERVER || 'http://localhost:8080'
+  const chatServer = env.VITE_CHAT_SERVER || 'http://localhost:8080'
 
   return {
     plugins: [
@@ -30,23 +29,23 @@ export default defineConfig(({ mode }) => {
     server: {
       proxy: {
         '/api/v2/chats': {
-          target: `http://localhost:${chatServerPort}`,
+          target: chatServer,
           changeOrigin: true,
           secure: false
         },
         '/ws': {
-          target: `http://localhost:${chatServerPort}`,
+          target: chatServer,
           changeOrigin: true,
           secure: false,
           ws: true
         },
         '/api': {
-          target: 'http://localhost:8080',
+          target: mainServer,
           changeOrigin: true,
           secure: false
         },
         '/batch-api': {
-          target: 'http://localhost:8081',
+          target: chatServer,
           changeOrigin: true,
           secure: false
         }

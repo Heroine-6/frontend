@@ -37,14 +37,14 @@
                 <span class="menu-text">내역 조회</span>
                 <span class="menu-arrow">›</span>
               </a>
-              <button class="menu-item" @click="handlePaymentPage">
+              <a href="/payment-checkout?type=DOWN_PAYMENT" class="menu-item">
                 <span class="menu-text">계약금 결제</span>
                 <span class="menu-arrow">›</span>
-              </button>
-              <button class="menu-item" @click="handlePaymentPage">
+              </a>
+              <a href="/payment-checkout?type=BALANCE" class="menu-item">
                 <span class="menu-text">잔금 결제</span>
                 <span class="menu-arrow">›</span>
-              </button>
+              </a>
             </div>
           </div>
 
@@ -270,11 +270,6 @@ async function handleKakaoCallback(code) {
     kakaoLinking.value = false
     window.history.replaceState({}, '', '/mypage.html')
   }
-}
-
-// 결제 관리 페이지 (구현 예정)
-function handlePaymentPage() {
-  alert('결제 관리 페이지 (구현 예정)')
 }
 
 // 로그아웃

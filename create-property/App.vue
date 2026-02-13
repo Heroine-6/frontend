@@ -268,6 +268,7 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
+import { getPresignedUrls, uploadFileToPresignedUrl } from '../shared/api.js'
 
 // ====== 상수 ======
 const propertyTypes = [
@@ -451,35 +452,52 @@ async function submitProperty() {
   }
 
   submitting.value = true
-  const formData = new FormData()
-
-  // 조회 데이터
-  formData.append('type', selectedType.value)
-  formData.append('address', form.value.address.trim())
-  formData.append('dealYmd', form.value.dealYmd.trim())
-  formData.append('floor', form.value.floor)
-
-  // 조회 API에서 받은 데이터
-  if (lookupData.value.name) formData.append('name', lookupData.value.name)
-  if (lookupData.value.price) formData.append('price', lookupData.value.price.toString())
-  if (lookupData.value.privateArea) formData.append('privateArea', lookupData.value.privateArea.toString())
-  if (lookupData.value.builtYear) formData.append('builtYear', lookupData.value.builtYear.toString())
-
-  // 사용자 입력 데이터
-  formData.append('totalFloor', form.value.totalFloor)
-  formData.append('roomCount', form.value.roomCount)
-  formData.append('supplyArea', form.value.supplyArea)
-  formData.append('migrateDate', form.value.migrateDate)
-
-  if (form.value.description.trim()) {
-    formData.append('description', form.value.description.trim())
-  }
-
-  // 이미지
-  selectedFiles.value.forEach(file => formData.append('images', file))
 
   try {
-    const res = await fetch('/api/v1/properties', {
+    // 이미지를 Presigned URL로 S3에 직접 업로드
+    let imageFileUrls = []
+    if (selectedFiles.value.length > 0) {
+      const presignResult = await getPresignedUrls(selectedFiles.value)
+      const presignedUrls = presignResult.data
+
+      await Promise.all(
+        presignedUrls.map((urlInfo, i) =>
+          uploadFileToPresignedUrl(urlInfo.uploadUrl, selectedFiles.value[i])
+        )
+      )
+
+      imageFileUrls = presignedUrls.map(urlInfo => urlInfo.fileUrl)
+    }
+
+    // FormData로 매물 정보 전송 (이미지는 URL로)
+    const formData = new FormData()
+
+    formData.append('type', selectedType.value)
+    formData.append('address', form.value.address.trim())
+    formData.append('dealYmd', form.value.dealYmd.trim())
+    formData.append('floor', form.value.floor)
+
+    if (lookupData.value.name) formData.append('name', lookupData.value.name)
+    if (lookupData.value.price) formData.append('price', lookupData.value.price.toString())
+    if (lookupData.value.privateArea) formData.append('privateArea', lookupData.value.privateArea.toString())
+    if (lookupData.value.builtYear) formData.append('builtYear', lookupData.value.builtYear.toString())
+
+    formData.append('totalFloor', form.value.totalFloor)
+    formData.append('roomCount', form.value.roomCount)
+    formData.append('supplyArea', form.value.supplyArea)
+    formData.append('migrateDate', form.value.migrateDate)
+
+    if (form.value.description.trim()) {
+      formData.append('description', form.value.description.trim())
+    }
+
+    // imageUrls를 쿼리파라미터로 전달
+    const params = new URLSearchParams()
+    imageFileUrls.forEach(url => params.append('imageUrls', url))
+    const queryString = params.toString()
+    const url = '/api/v1/properties' + (queryString ? '?' + queryString : '')
+
+    const res = await fetch(url, {
       method: 'POST',
       headers: { 'Authorization': token },
       body: formData,

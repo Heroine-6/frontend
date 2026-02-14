@@ -291,7 +291,10 @@ async function handleSubmit() {
     const { accessToken, refreshToken } = res.data
     localStorage.setItem('accessToken', accessToken)
     localStorage.setItem('refreshToken', refreshToken)
-    successMsg.value = '회원가입에 성공했습니다.'
+    successMsg.value = '회원가입이 완료되었습니다. 로그인 페이지로 이동합니다.'
+
+    window.location.href = '/'
+
   } catch (e) {
     errorMsg.value = e.message
   } finally {

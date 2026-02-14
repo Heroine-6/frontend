@@ -3,22 +3,86 @@
     <!-- 헤더 -->
     <header class="header">
       <div class="header-inner">
-        <a href="/" class="logo">부동부동</a>
-        <nav class="header-nav">
-          <a href="/search" class="btn-text">매물 검색</a>
-          <a href="/market-prices" class="btn-text">주변 시세</a>
-          <template v-if="isLoggedIn">
-            <a href="/mypage" class="btn-text">마이페이지</a>
-            <span class="user-greeting">{{ userName }}님</span>
-            <button class="btn-text" @click="logout">로그아웃</button>
-          </template>
-          <template v-else>
-            <a href="/signin" class="btn-text">로그인</a>
-            <a href="/signup" class="btn-header-primary">회원가입</a>
-          </template>
-        </nav>
+        <!-- 왼쪽 그룹 -->
+        <div class="header-left">
+          <button class="menu-btn" @click="toggleSidebar">☰</button>
+          <a href="/" class="logo">부동부동</a>
+        </div>
+
+        <!-- 오른쪽 그룹 -->
+        <div class="header-right">
+          <nav class="header-nav">
+            <template v-if="isLoggedIn">
+              <a href="/mypage" class="btn-text">마이페이지</a>
+              <span class="user-greeting">{{ userName }}님</span>
+              <button class="btn-text" @click="logout">로그아웃</button>
+            </template>
+            <template v-else>
+              <a href="/signin" class="btn-text">로그인</a>
+              <a href="/signup" class="btn-header-primary">회원가입</a>
+            </template>
+          </nav>
+        </div>
+
       </div>
+
     </header>
+    <div class="page">
+      <!-- Overlay -->
+      <div v-if="sidebarOpen" class="overlay" @click="closeSidebar"></div>
+
+      <!-- Sidebar -->
+      <aside class="sidebar" :class="{ open: sidebarOpen }">
+        <div class="sidebar-header">
+          <span class="sidebar-title">메뉴</span>
+          <button class="close-btn" @click="closeSidebar">✕</button>
+        </div>
+
+        <!-- 상단 메뉴 -->
+        <nav class="sidebar-nav">
+          <a href="/search" @click="closeSidebar" class="sidebar-link">
+            <span class="icon">🔍</span>
+            매물 검색
+          </a>
+
+          <a href="/market-prices" @click="closeSidebar" class="sidebar-link">
+            <span class="icon">📊</span>
+            주변 시세
+          </a>
+
+          <a v-if="isLoggedIn" href="/mypage" @click="closeSidebar" class="sidebar-link">
+            <span class="icon">👤</span>
+            마이페이지
+          </a>
+        </nav>
+
+        <div class="sidebar-divider"></div>
+
+        <!-- 하단 사용자 영역 -->
+        <div class="sidebar-user-area">
+          <div v-if="isLoggedIn" class="sidebar-user">
+            🙋 {{ userName }}님
+          </div>
+
+          <button
+              v-if="isLoggedIn"
+              class="sidebar-logout"
+              @click="logout"
+          >
+            🚪 로그아웃
+          </button>
+
+          <template v-else>
+            <div class="sidebar-auth">
+              <a href="/signin" class="sidebar-link">🔑 로그인</a>
+              <a href="/signup" class="sidebar-link">✨ 회원가입</a>
+            </div>
+          </template>
+        </div>
+      </aside>
+
+
+    </div>
 
     <!-- 히어로 -->
     <section class="hero">
@@ -205,8 +269,7 @@ async function fetchProperties() {
   page.value = 0
   try {
     const params = buildSearchParams()
-    const useSearch = searchKeyword.value || selectedType.value || selectedStatus.value
-    const endpoint = useSearch ? '/api/properties/v1/search' : '/api/properties/v1'
+    const endpoint = '/api/properties/v1'
     const res = await fetch(`${endpoint}?${params}`)
     const json = await res.json()
     if (json.success && json.data) {
@@ -295,6 +358,17 @@ function formatPrice(price) {
   }
   return `${num.toLocaleString()}원`
 }
+
+const sidebarOpen = ref(false)
+
+function toggleSidebar() {
+  sidebarOpen.value = true
+}
+
+function closeSidebar() {
+  sidebarOpen.value = false
+}
+
 </script>
 
 <style scoped>
@@ -314,6 +388,24 @@ function formatPrice(price) {
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px; /* 햄버거와 로고 간격 */
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.header-nav {
+  display: flex;
+  align-items: center;
+  gap: 16px;
 }
 .logo {
   font-size: 22px;
@@ -357,6 +449,142 @@ function formatPrice(price) {
   font-weight: 600;
   color: var(--color-text);
 }
+
+/* ---------- 햄버거 버튼 ---------- */
+.menu-btn {
+  background: none;
+  border: none;
+  font-size: 20px;
+  margin-right: 12px;
+  cursor: pointer;
+}
+
+/* Overlay */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(17, 24, 39, 0.35);
+  backdrop-filter: blur(2px);
+  z-index: 150;
+}
+
+/* Sidebar */
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: -280px;
+  width: 260px;
+  height: 100%;
+  background: #ffffff;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  border-top-right-radius: 20px;
+  border-bottom-right-radius: 20px;
+  transition: left 0.35s cubic-bezier(.4,.0,.2,1);
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar.open {
+  left: 0;
+}
+
+/* Header */
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 22px 20px;
+  font-weight: 700;
+  font-size: 16px;
+  border-bottom: 1px solid #eef2f7;
+}
+
+.close-btn {
+  border: none;
+  background: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: #94a3b8;
+}
+
+/* Navigation */
+.sidebar-nav {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  font-weight: 600;
+  color: #334155;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.sidebar-link:hover {
+  background: rgba(49,130,246,0.08);
+  color: #2563eb;
+}
+
+.icon {
+  font-size: 16px;
+  filter: grayscale(100%);
+  opacity: 0.8;
+  transition: all 0.2s;
+}
+
+.sidebar-link:hover .icon {
+  filter: none;
+  opacity: 1;
+}
+
+/* Divider */
+.sidebar-divider {
+  height: 1px;
+  background: #eef2f7;
+  margin: 18px 0;
+}
+
+/* User area */
+.sidebar-user-area {
+  padding: 20px;
+  border-top: 1px solid #eef2f7;
+}
+
+.sidebar-auth {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.sidebar-user {
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: #0f172a;
+}
+
+.sidebar-logout {
+  background: rgba(239,68,68,0.08);
+  border: none;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-weight: 600;
+  color: #ef4444;
+  cursor: pointer;
+  width: 100%;
+  transition: 0.2s;
+}
+
+.sidebar-logout:hover {
+  background: rgba(239,68,68,0.15);
+}
+
 
 /* ---------- 히어로 ---------- */
 .hero {

@@ -113,6 +113,33 @@
           </div>
         </template>
 
+        <!-- 새 채팅방 대기 상태 -->
+        <template v-else-if="pendingPropertyId">
+          <div class="chat-header">
+            <h2 class="chat-title">{{ pendingPropertyInfo?.name || '매물' }}</h2>
+            <p class="chat-detail">{{ pendingPropertyInfo?.address || '' }}</p>
+          </div>
+          <div class="chat-messages">
+            <div class="empty-text">메시지를 보내면 채팅방이 생성됩니다.</div>
+          </div>
+          <div class="chat-input-area">
+            <input
+              v-model="newMessage"
+              class="chat-input"
+              placeholder="메시지를 입력하세요..."
+              @keyup.enter="handleSendMessage"
+              :disabled="sending"
+            />
+            <button
+              class="chat-send-btn"
+              @click="handleSendMessage"
+              :disabled="!newMessage.trim() || sending"
+            >
+              전송
+            </button>
+          </div>
+        </template>
+
         <!-- 채팅방 미선택 상태 -->
         <div v-else class="chat-empty">
           <p class="chat-empty-text">채팅방을 선택해주세요</p>
@@ -154,6 +181,10 @@ const hasMoreMessages = ref(false)
 const messagePage = ref(0)
 const newMessage = ref('')
 const sending = ref(false)
+
+// ─── 새 채팅방 대기 상태 ───
+const pendingPropertyId = ref(null)
+const pendingPropertyInfo = ref(null)
 
 // ─── WebSocket ───
 let stompClient = null
@@ -272,12 +303,22 @@ async function handlePropertyChat(propertyId) {
       }
       if (room) await selectRoom(room)
     } else {
-      // 채팅방이 없으면 생성 (첫 메시지와 함께)
-      const result = await sendFirstMessage(propertyId, '안녕하세요, 매물에 대해 문의드립니다.')
-      if (result && result.roomId) {
-        await loadRooms()
-        const newRoom = rooms.value.find(r => r.roomId === result.roomId)
-        if (newRoom) await selectRoom(newRoom)
+      // 채팅방이 없으면 대기 상태로 진입 (첫 메시지 전송 시 생성)
+      selectedRoom.value = null
+      messages.value = []
+      pendingPropertyId.value = propertyId
+
+      // 매물 정보 로드
+      try {
+        const res = await getPropertyDetail(propertyId)
+        if (res && res.data) {
+          pendingPropertyInfo.value = {
+            name: res.data.name || '매물',
+            address: res.data.address || ''
+          }
+        }
+      } catch {
+        pendingPropertyInfo.value = { name: '매물', address: '' }
       }
     }
   } catch (e) {
@@ -339,7 +380,30 @@ async function loadMoreMessages() {
 // ─── 메시지 전송 ───
 async function handleSendMessage() {
   const content = newMessage.value.trim()
-  if (!content || !selectedRoom.value || sending.value) return
+  if (!content || sending.value) return
+
+  // 새 채팅방 대기 상태: 첫 메시지로 채팅방 생성
+  if (pendingPropertyId.value) {
+    sending.value = true
+    try {
+      const result = await sendFirstMessage(pendingPropertyId.value, content)
+      if (result && result.roomId) {
+        pendingPropertyId.value = null
+        pendingPropertyInfo.value = null
+        newMessage.value = ''
+        await loadRooms()
+        const newRoom = rooms.value.find(r => r.roomId === result.roomId)
+        if (newRoom) await selectRoom(newRoom)
+      }
+    } catch (e) {
+      console.error('채팅방 생성 실패:', e)
+    } finally {
+      sending.value = false
+    }
+    return
+  }
+
+  if (!selectedRoom.value) return
 
   sending.value = true
   try {

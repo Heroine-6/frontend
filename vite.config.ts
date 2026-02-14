@@ -69,7 +69,8 @@ export default defineConfig(({ mode }) => {
           'payment-checkout': resolve(__dirname, 'payment-checkout.html'),
           'payment-success': resolve(__dirname, 'payment-success.html'),
           'payment-fail': resolve(__dirname, 'payment-fail.html'),
-          chat: resolve(__dirname, 'chat.html')
+          chat: resolve(__dirname, 'chat.html'),
+          'auction-detail': resolve(__dirname, 'auction-detail.html')
         }
       }
     }

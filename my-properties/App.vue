@@ -230,7 +230,13 @@
                       class="btn-action btn-action-outline"
                       @click="viewDetail(item.id)"
                     >
-                      상세보기
+                      매물 상세보기
+                    </button>
+                    <button
+                      class="btn-action btn-action-outline"
+                      @click="viewAuctionDetail(item.auction.id)"
+                    >
+                      경매 상세보기
                     </button>
                   </template>
                 </div>
@@ -442,6 +448,10 @@ async function cancelAuction(item) {
 
 function viewDetail(propertyId) {
   window.location.href = `/property-detail.html?id=${propertyId}`
+}
+
+function viewAuctionDetail(auctionId) {
+  window.location.href = `/auction-detail.html?id=${auctionId}`
 }
 
 function goRegister() {

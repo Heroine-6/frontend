@@ -27,14 +27,14 @@
           <button class="btn-reset" @click="resetFilters">초기화</button>
         </div>
 
-        <!-- 단지명 검색 -->
+        <!-- 건물명 검색 -->
         <div class="filter-block">
-          <label class="filter-title">단지명 검색</label>
+          <label class="filter-title">건물명 검색</label>
           <input
             v-model="filters.name"
             type="text"
             class="form-input"
-            placeholder="단지명으로 검색"
+            placeholder="건물명으로 검색"
             @keyup.enter="doSearch"
           />
         </div>
@@ -615,7 +615,7 @@ function formatDate(dateStr) {
 
 /* ---------- 사이드바 ---------- */
 .sidebar {
-  width: 300px;
+  width: 375px;
   flex-shrink: 0;
   border-right: 1px solid var(--color-border);
   padding: 24px;

@@ -161,8 +161,8 @@
             검색 결과 <strong>{{ totalText }}</strong>
           </p>
           <div class="sort-group">
-            <select v-model="sortOption" class="sort-select" @change="doSearch">
-              <option value="newest">최신순</option>
+            <select v-model="sortOption" class="sort-select" @change="changeSort">
+            <option value="newest">최신순</option>
               <option value="priceAsc">낮은 가격순</option>
               <option value="priceDesc">높은 가격순</option>
             </select>
@@ -190,42 +190,57 @@
         <!-- 매물 리스트 -->
         <div v-else class="property-list">
           <a
-            v-for="item in properties"
-            :key="item.id"
-            :href="'/property-detail.html?id=' + item.id"
-            class="list-card"
+              v-for="item in properties"
+              :key="item.id"
+              :href="'/property-detail.html?id=' + item.id"
+              class="list-card"
           >
             <div class="list-thumb">
               <img
-                v-if="item.thumbnailImage"
-                :src="item.thumbnailImage"
-                :alt="item.name"
-                class="thumb-img"
+                  v-if="item.thumbnailImage"
+                  :src="item.thumbnailImage"
+                  :alt="item.name"
+                  class="thumb-img"
               />
               <div v-else class="thumb-placeholder">&#x1F3E2;</div>
-              <span v-if="item.auction" class="badge" :class="badgeClass(item.auction.status)">
-                {{ statusLabel(item.auction.status) }}
-              </span>
             </div>
+
             <div class="list-body">
-              <div class="list-top">
-                <span class="list-type">{{ typeLabel(item.type) }}</span>
-              </div>
               <h3 class="list-name">{{ item.name }}</h3>
+
               <p class="list-address">{{ item.address }}</p>
-              <div class="list-meta">
-                <span v-if="item.supplyArea">공급 {{ item.supplyArea }}m&sup2;</span>
-                <span v-if="item.privateArea" class="meta-dot">전용 {{ item.privateArea }}m&sup2;</span>
+
+              <!-- 🔥 태그 위치 -->
+              <div class="list-tags">
+                <span class="tag-type">
+                  {{ typeLabel(item.type) }}
+                </span>
+
+                <span
+                    v-if="item.auction"
+                    class="tag-status"
+                    :class="badgeClass(item.auction.status)"
+                >
+                  {{ statusLabel(item.auction.status) }}
+                </span>
               </div>
-              <p v-if="item.description" class="list-desc">{{ item.description }}</p>
+
+              <p v-if="item.description" class="list-desc">
+                {{ item.description }}
+              </p>
+
               <div v-if="item.auction" class="list-bottom">
-                <span class="list-price">{{ formatPrice(item.auction.startPrice) }}</span>
+                <span class="list-price">
+                  경매 시작가 {{ formatPrice(item.auction.startPrice) }}
+                </span>
+
                 <span v-if="item.auction.startedAt" class="list-date">
                   {{ formatDate(item.auction.startedAt) }}
                 </span>
               </div>
             </div>
           </a>
+
         </div>
 
         <!-- 더보기 -->
@@ -252,8 +267,8 @@ const propertyTypes = [
 const auctionStatuses = [
   { label: '전체', value: '' },
   { label: '경매 예정', value: 'SCHEDULED' },
-  { label: '진행 중', value: 'OPEN' },
-  { label: '종료', value: 'CLOSED' },
+  { label: '경매 중', value: 'OPEN' },
+  { label: '경매 종료', value: 'CLOSED' },
 ]
 
 const pricePresets = [
@@ -284,11 +299,7 @@ const page = ref(0)
 const totalCount = ref(0)
 const isLoggedIn = ref(false)
 const userName = ref('')
-
-const totalText = computed(() => {
-  if (properties.value.length === 0) return '0건'
-  return `${properties.value.length}건${hasNext.value ? '+' : ''}`
-})
+const totalText = computed(() => `${totalCount.value}건`)
 
 const activeTags = computed(() => {
   const tags = []
@@ -360,6 +371,7 @@ function parseUrlParams() {
 function buildParams() {
   const params = new URLSearchParams()
   const f = filters.value
+
   if (f.name) params.set('name', f.name)
   if (f.address) params.set('address', f.address)
   if (f.type) params.set('type', f.type)
@@ -368,9 +380,24 @@ function buildParams() {
   if (f.maxPrice) params.set('maxPrice', f.maxPrice)
   if (f.migrateDate) params.set('migrateDate', f.migrateDate)
   if (f.builtYear) params.set('builtYear', f.builtYear)
+
+  if (sortOption.value === 'priceAsc') {
+    params.set('sort', 'auction.startPrice,asc')
+  } else if (sortOption.value === 'priceDesc') {
+    params.set('sort', 'auction.startPrice,desc')
+  } else {
+    params.set('sort', 'createdAt,desc')
+  }
+
   params.set('page', String(page.value))
   params.set('size', '20')
+
   return params
+}
+
+function changeSort() {
+  page.value = 0
+  doSearch()
 }
 
 function updateUrl() {
@@ -398,8 +425,10 @@ async function doSearch() {
     const json = await res.json()
     if (json.success && json.data) {
       properties.value = json.data.content || []
-      hasNext.value = json.data.hasNext || false
+      totalCount.value = json.data.totalElements || 0
+      hasNext.value = (page.value + 1) < json.data.totalPages
     }
+
   } catch {
     properties.value = []
   } finally {
@@ -416,8 +445,10 @@ async function loadMore() {
     const json = await res.json()
     if (json.success && json.data) {
       properties.value.push(...(json.data.content || []))
-      hasNext.value = json.data.hasNext || false
+      totalCount.value = json.data.totalElements || 0
+      hasNext.value = (page.value + 1) < json.data.totalPages
     }
+
   } catch {
     /* ignore */
   } finally {
@@ -910,6 +941,43 @@ function formatDate(dateStr) {
   opacity: 0.5;
   cursor: not-allowed;
 }
+.list-tags {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+  margin-bottom: 8px;
+}
+
+.tag-type {
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  background: #eaf3ff;
+  color: var(--color-primary);
+  border-radius: 16px;
+}
+
+.tag-status {
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 16px;
+}
+
+.badge-scheduled {
+  background: #f2f4f6;
+  color: #6b7684;
+}
+
+.badge-open {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.badge-closed {
+  background: #ffeef0;
+  color: var(--color-error);
+}
 
 /* ---------- 반응형 ---------- */
 @media (max-width: 768px) {
@@ -933,5 +1001,6 @@ function formatDate(dateStr) {
   .list-body {
     padding: 16px;
   }
+
 }
 </style>

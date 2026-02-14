@@ -59,8 +59,8 @@ import { reactive, ref, onMounted } from 'vue'
 import { authSignIn, kakaoLogin } from '../shared/api.js'
 import { validateEmail, validatePassword } from '../shared/validators.js'
 
-const KAKAO_CLIENT_ID = import.meta.env.VITE_KAKAO_CLIENT_ID || ''
-const KAKAO_REDIRECT_URI = import.meta.env.VITE_KAKAO_REDIRECT_URI || ''
+const KAKAO_CLIENT_ID = import.meta.env.VITE_KAKAO_CLIENT_ID || import.meta.env.VITE_KAKAO_REST_API_KEY || ''
+const KAKAO_REDIRECT_URI = `${window.location.origin}/login/oauth2/code/kakao`
 const kakaoLoginUrl = `https://kauth.kakao.com/oauth/authorize?client_id=${KAKAO_CLIENT_ID}&redirect_uri=${encodeURIComponent(KAKAO_REDIRECT_URI)}&response_type=code`
 
 const form = reactive({ email: '', password: '' })

@@ -303,9 +303,9 @@ async function handleSubmit() {
 }
 
 function handleKakaoSignUp() {
-  const KAKAO_REST_API_KEY = import.meta.env.VITE_KAKAO_REST_API_KEY;
-  const REDIRECT_URI = window.location.origin + '/login/oauth2/code/kakao';
-  const KAKAO_AUTH_URL = `https://kauth.kakao.com/oauth/authorize?response_type=code&client_id=${KAKAO_REST_API_KEY}&redirect_uri=${REDIRECT_URI}&scope=profile_nickname,account_email,phone_number`;
+  const KAKAO_CLIENT_ID = import.meta.env.VITE_KAKAO_CLIENT_ID || import.meta.env.VITE_KAKAO_REST_API_KEY;
+  const REDIRECT_URI = `${window.location.origin}/login/oauth2/code/kakao`;
+  const KAKAO_AUTH_URL = `https://kauth.kakao.com/oauth/authorize?response_type=code&client_id=${KAKAO_CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&scope=profile_nickname,account_email,phone_number`;
   window.location.href = KAKAO_AUTH_URL;
 }
 </script>

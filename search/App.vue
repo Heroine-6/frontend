@@ -228,13 +228,19 @@
               <p v-if="item.description" class="list-desc">
                 {{ item.description }}
               </p>
-
-              <div v-if="item.auction" class="list-bottom">
-                <span class="list-price">
-                  경매 시작가 {{ formatPrice(item.auction.startPrice) }}
-                </span>
-
-                <span v-if="item.auction.startedAt" class="list-date">
+              <div class="list-bottom">
+                <div class="price-block">
+                  <span class="list-price-main">
+                    실거래가 {{ formatPrice(item.price) }}
+                  </span>
+                  <span
+                      v-if="item.auction"
+                      class="list-auction-price"
+                  >
+                    경매 시작가 {{ formatPrice(item.auction.startPrice) }}
+                  </span>
+                </div>
+                <span v-if="item.auction?.startedAt" class="list-date">
                   {{ formatDate(item.auction.startedAt) }}
                 </span>
               </div>
@@ -382,9 +388,9 @@ function buildParams() {
   if (f.builtYear) params.set('builtYear', f.builtYear)
 
   if (sortOption.value === 'priceAsc') {
-    params.set('sort', 'auction.startPrice,asc')
+    params.set('sort', 'price,asc')
   } else if (sortOption.value === 'priceDesc') {
-    params.set('sort', 'auction.startPrice,desc')
+    params.set('sort', 'price,desc')
   } else {
     params.set('sort', 'createdAt,desc')
   }
@@ -510,8 +516,10 @@ function badgeClass(status) {
 }
 
 function formatPrice(price) {
-  if (!price) return ''
-  const num = Number(price)
+  if (price === null || price === undefined) return ''
+
+  const num = Math.floor(Number(price))
+
   if (num >= 100000000) {
     const eok = Math.floor(num / 100000000)
     const man = Math.floor((num % 100000000) / 10000)
@@ -522,6 +530,7 @@ function formatPrice(price) {
   }
   return `${num.toLocaleString()}원`
 }
+
 
 function formatDate(dateStr) {
   if (!dateStr) return ''
@@ -799,18 +808,19 @@ function formatDate(dateStr) {
   text-decoration: none;
   color: inherit;
   transition: border-color 0.2s, box-shadow 0.2s;
+  height: 190px;
 }
+
+.list-thumb {
+  width: 240px;
+  height: 100%;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
 .list-card:hover {
   border-color: var(--color-primary);
   box-shadow: 0 4px 16px rgba(49, 130, 246, 0.08);
-}
-.list-thumb {
-  position: relative;
-  width: 240px;
-  min-height: 180px;
-  flex-shrink: 0;
-  background: var(--color-input-bg);
-  overflow: hidden;
 }
 .thumb-img {
   width: 100%;
@@ -888,8 +898,8 @@ function formatDate(dateStr) {
 .list-bottom {
   margin-top: auto;
   display: flex;
-  align-items: baseline;
-  gap: 12px;
+  justify-content: space-between;
+  align-items: flex-end;
 }
 .list-price {
   font-size: 20px;
@@ -979,6 +989,27 @@ function formatDate(dateStr) {
   color: var(--color-error);
 }
 
+.price-block {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 52px;
+}
+
+.list-price-main {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.list-auction-price {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-primary);
+  opacity: 0.7;
+}
+
+
 /* ---------- 반응형 ---------- */
 @media (max-width: 768px) {
   .search-layout {
@@ -993,10 +1024,19 @@ function formatDate(dateStr) {
   }
   .list-card {
     flex-direction: column;
+    min-height: 180px;
   }
   .list-thumb {
+    width: 240px;
+    height: 80px;
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+  .thumb-img {
     width: 100%;
-    height: 200px;
+    height: 100%;
+    object-fit: cover;
+    display: block;     /* 🔥 inline-img 여백 제거 */
   }
   .list-body {
     padding: 16px;

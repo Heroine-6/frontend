@@ -118,7 +118,7 @@
         <!-- 하단 액션 -->
         <div class="action-bar">
           <button class="btn-back-outline" @click="goBack">목록으로</button>
-          <button class="btn-inquiry" @click="goToChat">문의하기</button>
+          <button v-if="userRole === 'GENERAL'" class="btn-inquiry" @click="goToChat">문의하기</button>
         </div>
       </section>
     </div>
@@ -135,26 +135,24 @@ const error = ref('')
 const currentImage = ref(0)
 const isLoggedIn = ref(false)
 const userName = ref('')
+const userRole = ref('')
 
 onMounted(() => {
   checkAuth()
   loadProperty()
 })
 
-function decodeJwtPayload(token) {
-  const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')
-  const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0))
-  return JSON.parse(new TextDecoder().decode(bytes))
-}
-
 function checkAuth() {
   const token = localStorage.getItem('accessToken')
   if (!token) return
   try {
-    const payload = decodeJwtPayload(token)
+    const payload = JSON.parse(atob(token.split('.')[1]))
     isLoggedIn.value = true
     userName.value = payload.username || payload.userEmail || ''
-  } catch {
+    userRole.value = (payload.userRole || '').toUpperCase()
+    console.log('userRole:', userRole.value)
+  } catch (e) {
+    console.error('토큰 파싱 실패:', e)
     isLoggedIn.value = false
   }
 }

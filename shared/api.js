@@ -211,7 +211,20 @@ export function getMyBids(page = 0, size = 10, status = null) {
   })
 }
 
+export function createDutchBid(auctionId) {
+  return request(`/api/bids/v3/auctions/dutch/${auctionId}`, {
+    method: 'POST',
+    requireAuth: true
+  })
+}
+
 // ==================== 실거래가 API ====================
+
+export function compareWithMarket(auctionId, inputPrice) {
+  const params = new URLSearchParams({ distanceKm: '1.0', size: '50' })
+  if (inputPrice) params.append('inputPrice', inputPrice)
+  return request(`/api/real-deals/v2/compare/${auctionId}?${params}`)
+}
 
 export function getNearbyRealDeals(params) {
   const queryString = new URLSearchParams(params).toString()
@@ -341,6 +354,12 @@ export async function uploadFileToPresignedUrl(uploadUrl, file) {
 }
 
 // ==================== 사용자 API ====================
+
+export function getMyProfile() {
+  return request('/api/users/v2/me', {
+    requireAuth: true
+  })
+}
 
 export function updateNotificationSettings(settings) {
   return request('/api/users/v2/notifications', {

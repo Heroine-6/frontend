@@ -82,7 +82,7 @@
                   </div>
                   <div class="dutch-status-item">
                     <span class="dutch-status-label">시작가</span>
-                    <span class="dutch-status-value">{{ formatPriceKorean(auctionInfo.startPrice) }}</span>
+                    <span class="dutch-status-value">{{ formatPrice(auctionInfo.startPrice) }}원</span>
                   </div>
                   <div class="dutch-status-item">
                     <span class="dutch-status-label">남은시간</span>
@@ -209,7 +209,7 @@
                   </div>
                   <div class="dutch-status-item">
                     <span class="dutch-status-label">시작가</span>
-                    <span class="dutch-status-value">{{ formatPriceKorean(auctionInfo.startPrice) }}</span>
+                    <span class="dutch-status-value">{{ formatPrice(auctionInfo.startPrice) }}원</span>
                   </div>
                   <div class="dutch-status-item">
                     <span class="dutch-status-label">남은시간</span>
@@ -436,18 +436,6 @@ function formatPrice(price) {
   return Number(price).toLocaleString()
 }
 
-function formatPriceKorean(price) {
-  if (!price) return '-'
-  const num = Number(price)
-  if (num >= 100000000) {
-    const eok = Math.floor(num / 100000000)
-    const man = Math.floor((num % 100000000) / 10000)
-    return man > 0 ? `${eok}억 ${man.toLocaleString()}만원` : `${eok}억원`
-  }
-  if (num >= 10000) return `${Math.floor(num / 10000).toLocaleString()}만원`
-  return `${num.toLocaleString()}원`
-}
-
 function formatTime(datetime) {
   if (!datetime) return '-'
   const date = new Date(datetime)
@@ -508,7 +496,7 @@ function getStatusLabel() {
 }
 
 function goToBid() {
-  alert('입찰 기능은 준비 중입니다.')
+  window.location.href = `/bid-register.html?auctionId=${auctionId.value}&type=${auctionType.value}`
 }
 
 function goToPropertyDetail() {

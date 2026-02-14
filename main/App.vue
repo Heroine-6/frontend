@@ -174,6 +174,13 @@
               <div v-if="item.auction" class="card-price">
                 {{ formatPrice(item.auction.startPrice) }}
               </div>
+              <button
+                v-if="item.auction?.status === 'OPEN'"
+                class="btn-auction"
+                @click.prevent.stop="goToAuction(item.auction.id)"
+              >
+                경매 참여
+              </button>
             </div>
           </a>
         </div>
@@ -357,6 +364,10 @@ function formatPrice(price) {
     return `${Math.floor(num / 10000).toLocaleString()}만원`
   }
   return `${num.toLocaleString()}원`
+}
+
+function goToAuction(auctionId) {
+  window.location.href = `/auction-detail.html?id=${auctionId}`
 }
 
 const sidebarOpen = ref(false)
@@ -802,6 +813,22 @@ function getDetailLink(item) {
   font-size: 18px;
   font-weight: 800;
   color: var(--color-text);
+}
+.btn-auction {
+  display: inline-block;
+  margin-top: 10px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  background: #2eb67d;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.btn-auction:hover {
+  background: #259d6c;
 }
 
 /* ---------- 더보기 ---------- */

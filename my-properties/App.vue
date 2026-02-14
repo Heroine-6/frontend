@@ -234,7 +234,7 @@
                     </button>
                     <button
                       class="btn-action btn-action-outline"
-                      @click="viewAuctionDetail(item.auction.id)"
+                      @click="viewAuctionDetail(item.auction)"
                     >
                       경매 상세보기
                     </button>
@@ -450,8 +450,9 @@ function viewDetail(propertyId) {
   window.location.href = `/property-detail.html?id=${propertyId}`
 }
 
-function viewAuctionDetail(auctionId) {
-  window.location.href = `/auction-detail.html?id=${auctionId}`
+function viewAuctionDetail(auction) {
+  const type = auction.type || 'ENGLISH'
+  window.location.href = `/auction-detail.html?id=${auction.id}&type=${type}`
 }
 
 function goRegister() {

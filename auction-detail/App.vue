@@ -239,8 +239,9 @@
             </div>
           </div>
 
-          <!-- 채팅 버튼 -->
+          <!-- 액션 버튼 -->
           <div class="action-section">
+            <button v-if="auctionStatus === 'OPEN'" class="btn-primary" @click="goToBid">입찰하기</button>
             <button class="btn-chat" @click="goToChat">실시간 채팅 / 문의하기</button>
           </div>
         </template>

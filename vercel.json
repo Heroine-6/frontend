@@ -1,5 +1,8 @@
 {
   "cleanUrls": true,
+  "redirects": [
+    { "source": "/login/oauth2/code/kakao", "destination": "/signin", "statusCode": 302 }
+  ],
   "rewrites": [
     { "source": "/budongbudong", "destination": "/" },
     { "source": "/login/oauth2/code/kakao", "destination": "/signin.html" },

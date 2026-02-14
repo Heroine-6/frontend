@@ -24,132 +24,224 @@
           <p>{{ error }}</p>
         </div>
 
-        <template v-else-if="auctionInfo && statistics">
-          <!-- 실시간 카운트다운 (맨 위에 크게) -->
-          <div v-if="auctionStatus === 'OPEN'" class="countdown-section">
-            <div class="countdown-title">경매 종료까지 남은 시간</div>
-            <div class="countdown-display" :class="{ 'countdown-urgent': isTimeUrgent }">
-              <div v-if="timeRemaining.days > 0" class="countdown-unit">
-                <div class="countdown-number">{{ String(timeRemaining.days).padStart(2, '0') }}</div>
-                <div class="countdown-label">DAYS</div>
-              </div>
-              <div class="countdown-unit">
-                <div class="countdown-number">{{ String(timeRemaining.hours).padStart(2, '0') }}</div>
-                <div class="countdown-label">HOURS</div>
-              </div>
-              <div class="countdown-unit">
-                <div class="countdown-number">{{ String(timeRemaining.minutes).padStart(2, '0') }}</div>
-                <div class="countdown-label">MINUTES</div>
-              </div>
-              <div class="countdown-unit">
-                <div class="countdown-number">{{ String(timeRemaining.seconds).padStart(2, '0') }}</div>
-                <div class="countdown-label">SECONDS</div>
-              </div>
-            </div>
-          </div>
-          <div v-else-if="auctionStatus === 'SCHEDULED'" class="countdown-section">
-            <div class="countdown-title">경매 시작까지</div>
-            <div class="countdown-display">
-              <div v-if="timeUntilStart.days > 0" class="countdown-unit">
-                <div class="countdown-number">{{ String(timeUntilStart.days).padStart(2, '0') }}</div>
-                <div class="countdown-label">DAYS</div>
-              </div>
-              <div class="countdown-unit">
-                <div class="countdown-number">{{ String(timeUntilStart.hours).padStart(2, '0') }}</div>
-                <div class="countdown-label">HOURS</div>
-              </div>
-              <div class="countdown-unit">
-                <div class="countdown-number">{{ String(timeUntilStart.minutes).padStart(2, '0') }}</div>
-                <div class="countdown-label">MINUTES</div>
-              </div>
-              <div class="countdown-unit">
-                <div class="countdown-number">{{ String(timeUntilStart.seconds).padStart(2, '0') }}</div>
-                <div class="countdown-label">SECONDS</div>
-              </div>
-            </div>
-          </div>
-
-          <!-- 컴팩트한 2열 레이아웃 -->
-          <div class="compact-layout">
-            <!-- 왼쪽: 경매 정보 + 통계 -->
-            <div class="left-column">
-              <!-- 경매 기본 정보 -->
-              <div class="info-section-compact">
-                <div class="section-header-compact">
-                  <h2 class="section-title-compact">
-                    경매 정보
-                    <span class="auction-id-inline">#{{ auctionId }}</span>
-                  </h2>
-
+        <!-- ==================== 상향 경매 (ENGLISH) ==================== -->
+        <template v-else-if="auctionType === 'ENGLISH' && auctionInfo">
+          <!-- 페이지 헤더 -->
+          <div class="dutch-page-header">
+            <div class="dutch-title-row">
+              <div>
+                <span class="dutch-label">영국식 경매</span>
+                <h1 class="dutch-title">
+                  실시간 경매 진행 중 - 상향 경매
                   <span class="badge" :class="getBadgeClass()">{{ getStatusLabel() }}</span>
-                </div>
-                <div class="info-grid-compact">
-                  <div class="info-item">
-                    <span class="info-label-compact">시작가</span>
-                    <span class="info-value-compact">{{ formatPrice(auctionInfo.startPrice) }}원</span>
-                  </div>
-                  <div class="info-item highlight">
-                    <span class="info-label-compact">현재 최고가</span>
-                    <span class="info-value-compact highlight-text">{{ formatPrice(auctionInfo.highestPrice) }}원</span>
-                  </div>
-                  <div class="info-item">
-                    <span class="info-label-compact">입찰 단위</span>
-                    <span class="info-value-compact">{{ formatPrice(auctionInfo.minBidIncrement) }}원</span>
-                  </div>
-                  <div class="info-item">
-                    <span class="info-label-compact">입찰자 수</span>
-                    <span class="info-value-compact">{{ auctionInfo.totalBidders }}명</span>
-                  </div>
-                </div>
+                </h1>
               </div>
+              <button class="btn-secondary" @click="goToPropertyDetail">매물 상세 조회</button>
+            </div>
+          </div>
 
-              <!-- 경쟁 통계 -->
-              <div class="stats-section-compact">
-                <h3 class="section-title-compact">경쟁 통계</h3>
-                <div class="stats-grid-compact">
-                  <div class="stat-item">
-                    <span class="stat-label-compact">총 입찰 횟수</span>
-                    <span class="stat-value-compact">{{ statistics.totalBidCount }}회</span>
-                  </div>
-                  <div class="stat-item">
-                    <span class="stat-label-compact">가격 상승</span>
-                    <span class="stat-value-compact">{{ formatPrice(statistics.priceIncrease) }}원</span>
-                  </div>
+          <!-- 2열 레이아웃: 매물 정보 + 경매 현황 -->
+          <div class="dutch-layout">
+            <!-- 왼쪽: 매물 정보 및 이미지 -->
+            <div class="dutch-property-card">
+              <h3 class="section-title-compact">매물 정보</h3>
+              <div class="dutch-property-image">
+                <img
+                  v-if="propertyInfo?.thumbnailImage"
+                  :src="propertyInfo.thumbnailImage"
+                  :alt="propertyInfo.name"
+                  class="dutch-thumb-img"
+                />
+                <div v-else class="dutch-thumb-placeholder">🏢</div>
+              </div>
+              <div class="dutch-property-details">
+                <div class="dutch-detail-row">
+                  <span class="dutch-detail-label">매물명</span>
+                  <span class="dutch-detail-value">{{ propertyInfo?.name || '-' }}</span>
+                </div>
+                <div class="dutch-detail-row">
+                  <span class="dutch-detail-label">유형</span>
+                  <span class="dutch-detail-value">{{ typeLabel(propertyInfo?.type) }}</span>
+                </div>
+                <div class="dutch-detail-row">
+                  <span class="dutch-detail-label">준공일</span>
+                  <span class="dutch-detail-value">{{ propertyInfo?.builtYear || '-' }}년</span>
                 </div>
               </div>
             </div>
 
-            <!-- 오른쪽: 입찰 내역 -->
-            <div class="right-column">
-              <div class="bid-history-section-compact">
-                <h3 class="section-title-compact">실시간 입찰 기록</h3>
-                <div class="bid-history-list-compact">
-                  <div v-if="bidHistory.length === 0" class="empty-bids-compact">
-                    입찰 내역이 없습니다
+            <!-- 오른쪽: 경매 현황 + 입찰 정보 -->
+            <div class="dutch-right-column">
+              <!-- 경매 현황 -->
+              <div class="dutch-status-card">
+                <h3 class="section-title-compact">경매 현황</h3>
+                <div class="dutch-status-list">
+                  <div class="dutch-status-item dutch-status-highlight">
+                    <span class="dutch-status-label">현재 최고가</span>
+                    <span class="dutch-status-value dutch-current-price">{{ formatPrice(auctionInfo.highestPrice) }}원</span>
                   </div>
-                  <div v-else class="bid-items-compact">
-                    <div
-                      v-for="(bid, index) in bidHistory.slice(0, 8)"
-                      :key="bid.id || index"
-                      class="bid-item-compact"
-                      :class="{ 'bid-highest': index === 0 }"
-                    >
-                      <span class="bid-time-compact">{{ formatTime(bid.createdAt) }}</span>
-                      <span class="bid-price-compact">
-                        {{ formatPrice(bid.price) }}원
-                        <span v-if="index === 0" class="bid-badge-compact">최고</span>
-                      </span>
-                    </div>
+                  <div class="dutch-status-item">
+                    <span class="dutch-status-label">시작가</span>
+                    <span class="dutch-status-value">{{ formatPriceKorean(auctionInfo.startPrice) }}</span>
+                  </div>
+                  <div class="dutch-status-item">
+                    <span class="dutch-status-label">남은시간</span>
+                    <span class="dutch-status-value">{{ formatCountdownInline() }}</span>
+                  </div>
+                  <div class="dutch-status-item">
+                    <span class="dutch-status-label">종료</span>
+                    <span class="dutch-status-value">{{ formatDateTime(auctionInfo.endedAt) }}</span>
                   </div>
                 </div>
               </div>
+
+              <!-- 입찰 정보 -->
+              <div class="english-bid-info-card">
+                <h3 class="section-title-compact">입찰 정보</h3>
+                <div class="dutch-decrease-list">
+                  <div class="dutch-decrease-item">
+                    <span class="dutch-decrease-label">입찰 단위</span>
+                    <span class="dutch-decrease-value">{{ formatPrice(auctionInfo.minBidIncrement) }}원</span>
+                  </div>
+                  <div class="dutch-decrease-item">
+                    <span class="dutch-decrease-label">입찰자 수</span>
+                    <span class="dutch-decrease-value">{{ auctionInfo.totalBidders }}명</span>
+                  </div>
+                  <div v-if="statistics" class="dutch-decrease-item">
+                    <span class="dutch-decrease-label">총 입찰 횟수</span>
+                    <span class="dutch-decrease-value">{{ statistics.totalBidCount }}회</span>
+                  </div>
+                  <div v-if="statistics" class="dutch-decrease-item">
+                    <span class="dutch-decrease-label">가격 상승</span>
+                    <span class="dutch-decrease-value">{{ formatPrice(statistics.priceIncrease) }}원</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 실시간 입찰 기록 -->
+          <div class="dutch-history-card english-bid-history">
+            <h3 class="section-title-compact">실시간 입찰 기록</h3>
+            <div class="dutch-history-list">
+              <div v-if="bidHistory.length === 0" class="empty-bids-compact">
+                입찰 내역이 없습니다
+              </div>
+              <template v-else>
+                <div
+                  v-for="(bid, index) in bidHistory.slice(0, 10)"
+                  :key="bid.id || index"
+                  class="bid-item-compact"
+                  :class="{ 'bid-highest': index === 0 }"
+                >
+                  <span class="bid-time-compact">{{ formatTime(bid.createdAt) }}</span>
+                  <span class="bid-price-compact">
+                    {{ formatPrice(bid.price) }}원
+                    <span v-if="index === 0" class="bid-badge-compact">최고</span>
+                  </span>
+                </div>
+              </template>
             </div>
           </div>
 
           <!-- 액션 버튼 -->
           <div class="action-section">
-            <button class="btn-primary" @click="goToBid">입찰하기</button>
-            <button class="btn-secondary" @click="goToPropertyDetail">매물 상세보기</button>
+            <button v-if="auctionStatus === 'OPEN'" class="btn-primary" @click="goToBid">입찰하기</button>
+            <button class="btn-chat" @click="goToChat">실시간 채팅 / 문의하기</button>
+          </div>
+        </template>
+
+        <!-- ==================== 하향 경매 (DESCENDING) ==================== -->
+        <template v-else-if="auctionType === 'DUTCH' && auctionInfo">
+          <!-- 페이지 헤더 -->
+          <div class="dutch-page-header">
+            <div class="dutch-title-row">
+              <div>
+                <span class="dutch-label">네덜란드식 경매</span>
+                <h1 class="dutch-title">
+                  실시간 경매 진행 중 - 하향 경매
+                  <span class="badge" :class="getBadgeClass()">{{ getStatusLabel() }}</span>
+                </h1>
+              </div>
+              <button class="btn-secondary" @click="goToPropertyDetail">매물 상세 조회</button>
+            </div>
+          </div>
+
+          <!-- 2열 레이아웃: 매물 정보 + 경매 현황 -->
+          <div class="dutch-layout">
+            <!-- 왼쪽: 매물 정보 및 이미지 -->
+            <div class="dutch-property-card">
+              <h3 class="section-title-compact">매물 정보</h3>
+              <div class="dutch-property-image">
+                <img
+                  v-if="propertyInfo?.thumbnailImage"
+                  :src="propertyInfo.thumbnailImage"
+                  :alt="propertyInfo.name"
+                  class="dutch-thumb-img"
+                />
+                <div v-else class="dutch-thumb-placeholder">🏢</div>
+              </div>
+              <div class="dutch-property-details">
+                <div class="dutch-detail-row">
+                  <span class="dutch-detail-label">매물명</span>
+                  <span class="dutch-detail-value">{{ propertyInfo?.name || '-' }}</span>
+                </div>
+                <div class="dutch-detail-row">
+                  <span class="dutch-detail-label">유형</span>
+                  <span class="dutch-detail-value">{{ typeLabel(propertyInfo?.type) }}</span>
+                </div>
+                <div class="dutch-detail-row">
+                  <span class="dutch-detail-label">준공일</span>
+                  <span class="dutch-detail-value">{{ propertyInfo?.builtYear || '-' }}년</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 오른쪽: 경매 현황 + 감소 정보 -->
+            <div class="dutch-right-column">
+              <!-- 경매 현황 -->
+              <div class="dutch-status-card">
+                <h3 class="section-title-compact">경매 현황</h3>
+                <div class="dutch-status-list">
+                  <div class="dutch-status-item dutch-status-highlight">
+                    <span class="dutch-status-label">현재 금액</span>
+                    <span class="dutch-status-value dutch-current-price">{{ formatPrice(currentPrice) }}원</span>
+                  </div>
+                  <div class="dutch-status-item">
+                    <span class="dutch-status-label">시작가</span>
+                    <span class="dutch-status-value">{{ formatPriceKorean(auctionInfo.startPrice) }}</span>
+                  </div>
+                  <div class="dutch-status-item">
+                    <span class="dutch-status-label">남은시간</span>
+                    <span class="dutch-status-value">{{ formatCountdownInline() }}</span>
+                  </div>
+                  <div class="dutch-status-item">
+                    <span class="dutch-status-label">종료</span>
+                    <span class="dutch-status-value">{{ formatDateTime(auctionInfo.endedAt) }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 감소 정보 -->
+              <div class="dutch-decrease-card">
+                <h3 class="section-title-compact">감소 정보</h3>
+                <div class="dutch-decrease-list">
+                  <div class="dutch-decrease-item">
+                    <span class="dutch-decrease-label">감소 주기</span>
+                    <span class="dutch-decrease-value">30분</span>
+                  </div>
+                  <div class="dutch-decrease-item">
+                    <span class="dutch-decrease-label">주기당 감소 금액</span>
+                    <span class="dutch-decrease-value">{{ formatPrice(auctionInfo.decreasePrice) }}원</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 채팅 버튼 -->
+          <div class="action-section">
+            <button class="btn-chat" @click="goToChat">실시간 채팅 / 문의하기</button>
           </div>
         </template>
       </div>
@@ -158,10 +250,13 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { getPropertyDetail } from '../shared/api.js'
 
-// URL에서 auctionId 가져오기
-const auctionId = ref(new URLSearchParams(window.location.search).get('id'))
+// URL 파라미터
+const params = new URLSearchParams(window.location.search)
+const auctionId = ref(params.get('id'))
+const auctionType = ref(params.get('type') || 'ENGLISH')
 
 const loading = ref(false)
 const error = ref('')
@@ -170,22 +265,19 @@ const auctionInfo = ref(null)
 const statistics = ref(null)
 const auctionStatus = ref(null)
 const bidHistory = ref([])
+const propertyInfo = ref(null)
 
 // 카운트다운 관련 상태
-const timeRemaining = ref({
-  days: 0,
-  hours: 0,
-  minutes: 0,
-  seconds: 0
-})
-const timeUntilStart = ref({
-  days: 0,
-  hours: 0,
-  minutes: 0,
-  seconds: 0
-})
-const isTimeUrgent = ref(false) // 1시간 미만일 때 true
+const timeRemaining = ref({ days: 0, hours: 0, minutes: 0, seconds: 0 })
+const timeUntilStart = ref({ days: 0, hours: 0, minutes: 0, seconds: 0 })
+const isTimeUrgent = ref(false)
 let countdownInterval = null
+
+// 하향 경매: 현재 가격 (API에서 currentPrice 제공)
+const currentPrice = computed(() => {
+  if (!auctionInfo.value) return 0
+  return auctionInfo.value.currentPrice || auctionInfo.value.startPrice || 0
+})
 
 onMounted(async () => {
   const token = localStorage.getItem('accessToken')
@@ -230,21 +322,26 @@ async function fetchAuctionData() {
 
     auctionInfo.value = infoJson.data
 
-    // 경매 경쟁 통계 조회
-    const statsRes = await fetch(`/api/auctions/v1/${auctionId.value}/statistics`)
-    const statsJson = await statsRes.json()
+    // API 응답에서 타입/상태 자동 감지
+    if (auctionInfo.value.type) {
+      auctionType.value = auctionInfo.value.type
+    }
+    auctionStatus.value = auctionInfo.value.status || 'OPEN'
 
-    if (!statsJson.success) {
-      throw new Error(statsJson.message || '경매 통계를 불러올 수 없습니다.')
+    // 매물 정보 조회 (공통)
+    if (auctionInfo.value.propertyId) {
+      await fetchPropertyInfo(auctionInfo.value.propertyId)
     }
 
-    statistics.value = statsJson.data
-
-    // 경매 상태 조회
-    await fetchAuctionStatus()
-
-    // 입찰 내역 조회
-    await fetchBidHistory()
+    if (auctionType.value === 'ENGLISH') {
+      // 상향 경매: 통계 + 입찰 내역 조회
+      const statsRes = await fetch(`/api/auctions/v1/${auctionId.value}/statistics`)
+      const statsJson = await statsRes.json()
+      if (statsJson.success) {
+        statistics.value = statsJson.data
+      }
+      await fetchBidHistory()
+    }
 
     // 카운트다운 시작
     startCountdown()
@@ -256,21 +353,14 @@ async function fetchAuctionData() {
   }
 }
 
-async function fetchAuctionStatus() {
+async function fetchPropertyInfo(propertyId) {
   try {
-    const now = new Date()
-    const start = new Date(auctionInfo.value?.startedAt)
-    const end = new Date(auctionInfo.value?.endedAt)
-
-    if (now < start) {
-      auctionStatus.value = 'SCHEDULED'
-    } else if (now >= start && now < end) {
-      auctionStatus.value = 'OPEN'
-    } else {
-      auctionStatus.value = 'CLOSED'
+    const res = await getPropertyDetail(propertyId)
+    if (res.data) {
+      propertyInfo.value = res.data
     }
   } catch (e) {
-    console.error('경매 상태 조회 실패:', e)
+    console.error('매물 정보 조회 실패:', e)
   }
 }
 
@@ -282,11 +372,8 @@ async function fetchBidHistory() {
     if (json.success && json.data) {
       const data = Array.isArray(json.data.content) ? json.data.content :
                    Array.isArray(json.data) ? json.data : []
-
       bidHistory.value = data
-      // 최신순으로 정렬
       bidHistory.value.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-
     } else {
       bidHistory.value = []
     }
@@ -295,16 +382,14 @@ async function fetchBidHistory() {
   }
 }
 
-// 카운트다운 시작
+// 카운트다운
 function startCountdown() {
   updateCountdown()
-
   countdownInterval = setInterval(() => {
     updateCountdown()
   }, 1000)
 }
 
-// 남은 시간 계산 및 업데이트
 function updateCountdown() {
   if (!auctionInfo.value) return
 
@@ -314,45 +399,52 @@ function updateCountdown() {
 
   if (auctionStatus.value === 'OPEN') {
     const diff = endDate - now
-
     if (diff <= 0) {
       timeRemaining.value = { days: 0, hours: 0, minutes: 0, seconds: 0 }
-      auctionStatus.value = 'CLOSED'
-      if (countdownInterval) {
-        clearInterval(countdownInterval)
-      }
+      isTimeUrgent.value = false
+      if (countdownInterval) clearInterval(countdownInterval)
       return
     }
-
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24))
-    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
-    const seconds = Math.floor((diff % (1000 * 60)) / 1000)
-
-    timeRemaining.value = { days, hours, minutes, seconds }
+    timeRemaining.value = calcTimeParts(diff)
     isTimeUrgent.value = diff < 3600000
   }
 
   if (auctionStatus.value === 'SCHEDULED') {
     const diff = startDate - now
-
     if (diff <= 0) {
-      auctionStatus.value = 'OPEN'
+      timeUntilStart.value = { days: 0, hours: 0, minutes: 0, seconds: 0 }
+      if (countdownInterval) clearInterval(countdownInterval)
       return
     }
-
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24))
-    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
-    const seconds = Math.floor((diff % (1000 * 60)) / 1000)
-
-    timeUntilStart.value = { days, hours, minutes, seconds }
+    timeUntilStart.value = calcTimeParts(diff)
   }
 }
 
+function calcTimeParts(diff) {
+  return {
+    days: Math.floor(diff / (1000 * 60 * 60 * 24)),
+    hours: Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+    minutes: Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)),
+    seconds: Math.floor((diff % (1000 * 60)) / 1000)
+  }
+}
+
+// 포맷 유틸
 function formatPrice(price) {
-  if (!price) return '0'
-  return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+  if (!price && price !== 0) return '0'
+  return Number(price).toLocaleString()
+}
+
+function formatPriceKorean(price) {
+  if (!price) return '-'
+  const num = Number(price)
+  if (num >= 100000000) {
+    const eok = Math.floor(num / 100000000)
+    const man = Math.floor((num % 100000000) / 10000)
+    return man > 0 ? `${eok}억 ${man.toLocaleString()}만원` : `${eok}억원`
+  }
+  if (num >= 10000) return `${Math.floor(num / 10000).toLocaleString()}만원`
+  return `${num.toLocaleString()}원`
 }
 
 function formatTime(datetime) {
@@ -362,6 +454,30 @@ function formatTime(datetime) {
   const minute = String(date.getMinutes()).padStart(2, '0')
   const second = String(date.getSeconds()).padStart(2, '0')
   return `${hour}:${minute}:${second}`
+}
+
+function formatDateTime(datetime) {
+  if (!datetime) return '-'
+  const d = new Date(datetime)
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  const h = String(d.getHours()).padStart(2, '0')
+  const min = String(d.getMinutes()).padStart(2, '0')
+  return `${y}-${m}-${day} ${h}:${min}`
+}
+
+function formatCountdownInline() {
+  const t = timeRemaining.value
+  const parts = []
+  if (t.days > 0) parts.push(`${t.days}일`)
+  parts.push(`${String(t.hours).padStart(2, '0')}:${String(t.minutes).padStart(2, '0')}:${String(t.seconds).padStart(2, '0')}`)
+  return parts.join(' ')
+}
+
+function typeLabel(type) {
+  const m = { APARTMENT: '아파트', VILLA: '빌라', OFFICETEL: '오피스텔' }
+  return m[type] || type || '-'
 }
 
 function getBadgeClass() {
@@ -386,7 +502,21 @@ function goToBid() {
 }
 
 function goToPropertyDetail() {
-  alert('매물 상세 페이지로 이동합니다.')
+  if (propertyInfo.value?.id) {
+    window.location.href = `/property-detail.html?id=${propertyInfo.value.id}`
+  } else if (auctionInfo.value?.propertyId) {
+    window.location.href = `/property-detail.html?id=${auctionInfo.value.propertyId}`
+  } else {
+    alert('매물 정보가 없습니다.')
+  }
+}
+
+function goToChat() {
+  if (propertyInfo.value?.id) {
+    window.location.href = `/chat.html?propertyId=${propertyInfo.value.id}`
+  } else {
+    window.location.href = '/chat.html'
+  }
 }
 
 function logout() {
@@ -397,7 +527,7 @@ function logout() {
 </script>
 
 <style scoped>
-/* 헤더 */
+/* ========== 공통 ========== */
 .header {
   background: var(--color-surface);
   border-bottom: 1px solid var(--color-border);
@@ -448,7 +578,6 @@ function logout() {
   font-weight: 600;
 }
 
-/* 경매 상세 컨테이너 */
 .auction-container {
   background: var(--color-bg);
   min-height: calc(100vh - 64px);
@@ -460,7 +589,6 @@ function logout() {
   margin: 0 auto;
 }
 
-/* 로딩/빈 상태 */
 .loading-state,
 .empty-state {
   text-align: center;
@@ -473,7 +601,60 @@ function logout() {
   margin-bottom: 16px;
 }
 
-/* 카운트다운 섹션 */
+.section-title-compact {
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0 0 16px 0;
+}
+
+.badge {
+  display: inline-block;
+  padding: 4px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 12px;
+}
+
+.badge-success { background: #e8f5e9; color: #2e7d32; }
+.badge-error { background: #ffeef0; color: var(--color-error); }
+.badge-warning { background: #fff4e5; color: #e65100; }
+
+.action-section {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  padding-top: 20px;
+}
+
+.btn-primary {
+  padding: 14px 40px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+  background: var(--color-primary);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-primary:hover { background: var(--color-primary-hover); }
+
+.btn-secondary {
+  padding: 14px 40px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-primary);
+  background: #f0f7ff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-secondary:hover { background: #e6f2ff; }
+
+/* ========== 상향 경매 ========== */
 .countdown-section {
   margin-bottom: 20px;
   padding: 25px 32px;
@@ -488,7 +669,6 @@ function logout() {
   color: rgba(255, 255, 255, 0.95);
   margin-bottom: 16px;
   text-align: center;
-  letter-spacing: -0.3px;
 }
 
 .countdown-display {
@@ -510,7 +690,6 @@ function logout() {
   font-weight: 700;
   color: #ffffff;
   line-height: 1;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   letter-spacing: -2px;
 }
 
@@ -522,21 +701,13 @@ function logout() {
   text-transform: uppercase;
 }
 
-/* 긴급 상태 (1시간 미만) */
-.countdown-urgent {
-  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
-}
-
-.countdown-urgent .countdown-number {
-  animation: pulse-number 1s ease-in-out infinite;
-}
-
+.countdown-urgent { background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%); }
+.countdown-urgent .countdown-number { animation: pulse-number 1s ease-in-out infinite; }
 @keyframes pulse-number {
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.05); }
 }
 
-/* 컴팩트 2열 레이아웃 */
 .compact-layout {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -544,14 +715,12 @@ function logout() {
   margin-bottom: 20px;
 }
 
-.left-column,
-.right-column {
+.left-column, .right-column {
   display: flex;
   flex-direction: column;
   gap: 20px;
 }
 
-/* 컴팩트 경매 정보 */
 .info-section-compact {
   background: var(--color-surface);
   border-radius: 12px;
@@ -564,12 +733,6 @@ function logout() {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 16px;
-}
-
-.section-title-compact {
-  font-size: 16px;
-  font-weight: 700;
-  margin: 0;
 }
 
 .info-grid-compact {
@@ -609,7 +772,6 @@ function logout() {
   font-size: 16px;
 }
 
-/* 컴팩트 통계 */
 .stats-section-compact {
   background: var(--color-surface);
   border-radius: 12px;
@@ -632,19 +794,14 @@ function logout() {
   border-radius: 8px;
 }
 
-.stat-label-compact {
+.stat-label-compact, .stat-value-compact {
   font-size: 12px;
-  color: var(--color-text-secondary);
   font-weight: 600;
 }
 
-.stat-value-compact {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--color-text);
-}
+.stat-label-compact { color: var(--color-text-secondary); }
+.stat-value-compact { font-size: 15px; font-weight: 700; color: var(--color-text); }
 
-/* 컴팩트 입찰 내역 */
 .bid-history-section-compact {
   background: var(--color-surface);
   border-radius: 12px;
@@ -653,23 +810,9 @@ function logout() {
   height: 100%;
 }
 
-.bid-history-list-compact {
-  max-height: 400px;
-  overflow-y: auto;
-}
-
-.empty-bids-compact {
-  text-align: center;
-  padding: 40px 20px;
-  color: var(--color-text-secondary);
-  font-size: 14px;
-}
-
-.bid-items-compact {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
+.bid-history-list-compact { max-height: 400px; overflow-y: auto; }
+.empty-bids-compact { text-align: center; padding: 40px 20px; color: var(--color-text-secondary); font-size: 14px; }
+.bid-items-compact { display: flex; flex-direction: column; gap: 8px; }
 
 .bid-item-compact {
   display: flex;
@@ -682,20 +825,9 @@ function logout() {
   transition: all 0.2s;
 }
 
-.bid-item-compact:hover {
-  border-color: var(--color-primary);
-}
-
-.bid-item-compact.bid-highest {
-  background: #f0f7ff;
-  border-color: var(--color-primary);
-}
-
-.bid-time-compact {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--color-text-secondary);
-}
+.bid-item-compact:hover { border-color: var(--color-primary); }
+.bid-item-compact.bid-highest { background: #f0f7ff; border-color: var(--color-primary); }
+.bid-time-compact { font-size: 12px; font-weight: 600; color: var(--color-text-secondary); }
 
 .bid-price-compact {
   font-size: 14px;
@@ -716,73 +848,225 @@ function logout() {
   border-radius: 8px;
 }
 
-/* 배지 */
-.badge {
-  display: inline-block;
-  padding: 4px 12px;
-  font-size: 11px;
-  font-weight: 600;
-  border-radius: 12px;
+/* ========== 하향 경매 (Dutch) ========== */
+.dutch-page-header {
+  margin-bottom: 24px;
 }
 
-.badge-success {
-  background: #e8f5e9;
-  color: #2e7d32;
-}
-
-.badge-error {
-  background: #ffeef0;
-  color: var(--color-error);
-}
-
-.badge-warning {
-  background: #fff4e5;
-  color: #e65100;
-}
-
-/* 액션 섹션 */
-.action-section {
+.dutch-title-row {
   display: flex;
-  gap: 12px;
-  justify-content: center;
-  padding-top: 20px;
+  justify-content: space-between;
+  align-items: center;
 }
 
-.btn-primary {
-  padding: 14px 40px;
+.dutch-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  margin-bottom: 4px;
+  display: block;
+}
+
+.dutch-title {
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--color-text);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* 2열 레이아웃 */
+.dutch-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+/* 매물 정보 카드 */
+.dutch-property-card {
+  background: var(--color-surface);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: var(--shadow);
+  border: 2px solid var(--color-primary);
+}
+
+.dutch-property-image {
+  width: 100%;
+  height: 240px;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 16px;
+  background: #e8edf3;
+}
+
+.dutch-thumb-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.dutch-thumb-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 64px;
+  background: #e8edf3;
+}
+
+.dutch-property-details {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dutch-detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.dutch-detail-row:last-child {
+  border-bottom: none;
+}
+
+.dutch-detail-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.dutch-detail-value {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+/* 오른쪽 컬럼 */
+.dutch-right-column {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* 경매 현황 카드 */
+.dutch-status-card {
+  background: var(--color-surface);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: var(--shadow);
+}
+
+.dutch-status-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dutch-status-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background: var(--color-bg);
+  border-radius: 8px;
+}
+
+.dutch-status-highlight {
+  background: #f0f7ff;
+  border: 2px solid var(--color-primary);
+}
+
+.dutch-status-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.dutch-status-value {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.dutch-current-price {
+  font-size: 18px;
+  color: var(--color-primary);
+}
+
+/* 입찰 정보 카드 (영국식) */
+.english-bid-info-card {
+  background: #f0f7ff;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: var(--shadow);
+}
+
+/* 입찰 기록 (영국식) */
+.english-bid-history {
+  background: var(--color-surface);
+}
+
+/* 감소 정보 카드 */
+.dutch-decrease-card {
+  background: #fff0f3;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: var(--shadow);
+}
+
+.dutch-decrease-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dutch-decrease-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.dutch-decrease-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.dutch-decrease-value {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+
+/* 채팅 버튼 */
+.btn-chat {
+  padding: 16px 48px;
   font-size: 16px;
   font-weight: 600;
   color: #fff;
-  background: var(--color-primary);
+  background: #7c8db5;
   border: none;
   border-radius: 8px;
   cursor: pointer;
   transition: background 0.2s;
 }
 
-.btn-primary:hover {
-  background: var(--color-primary-hover);
+.btn-chat:hover {
+  background: #6a7da5;
 }
 
-.btn-secondary {
-  padding: 14px 40px;
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--color-primary);
-  background: #f0f7ff;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-secondary:hover {
-  background: #e6f2ff;
-}
-
-/* 반응형 */
+/* ========== 반응형 ========== */
 @media (max-width: 1024px) {
-  .compact-layout {
+  .compact-layout,
+  .dutch-layout {
     grid-template-columns: 1fr;
   }
 
@@ -792,43 +1076,23 @@ function logout() {
 }
 
 @media (max-width: 768px) {
-  .header-nav {
-    gap: 12px;
-  }
+  .header-nav { gap: 12px; }
+  .btn-text { font-size: 14px; }
+  .auction-container { padding: 16px; }
 
-  .btn-text {
-    font-size: 14px;
-  }
+  .countdown-section { padding: 32px 20px; }
+  .countdown-display { gap: 24px; }
+  .countdown-number { font-size: 56px; }
+  .countdown-label { font-size: 11px; }
 
-  .auction-container {
-    padding: 16px;
-  }
-
-  .countdown-section {
-    padding: 32px 20px;
-  }
-
-  .countdown-display {
-    gap: 24px;
-  }
-
-  .countdown-number {
-    font-size: 56px;
-  }
-
-  .countdown-label {
-    font-size: 11px;
-  }
-
-  .compact-layout {
+  .compact-layout,
+  .dutch-layout {
     grid-template-columns: 1fr;
     gap: 16px;
     margin-bottom: 16px;
   }
 
-  .info-grid-compact {
-    grid-template-columns: 1fr;
-  }
+  .info-grid-compact { grid-template-columns: 1fr; }
 
   .info-section-compact,
   .stats-section-compact,
@@ -836,17 +1100,12 @@ function logout() {
     padding: 16px;
   }
 
-  .bid-history-list-compact {
-    max-height: 300px;
-  }
+  .bid-history-list-compact { max-height: 300px; }
 
-  .action-section {
-    flex-direction: column;
-  }
+  .action-section { flex-direction: column; }
+  .btn-primary, .btn-secondary, .btn-chat { width: 100%; }
 
-  .btn-primary,
-  .btn-secondary {
-    width: 100%;
-  }
+  .dutch-title-row { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .dutch-title { font-size: 20px; }
 }
 </style>

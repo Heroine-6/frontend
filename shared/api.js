@@ -258,6 +258,20 @@ export function getMarketPrices(params) {
 
 // ==================== 결제 API ====================
 
+// 마이페이지 결제 대상 경매 목록 조회 (계약금/잔금)
+export function getMyPaymentAuctions(type) {
+  return request(`/api/payments/v2/my?type=${type}`, {
+    requireAuth: true
+  })
+}
+
+// 경매별 결제 상세 정보 조회
+export function getPaymentAuctionInfo(auctionId, type) {
+    return request(
+        `/api/payments/v2/auctions/${auctionId}/info?type=${type}`,
+        { requireAuth: true }
+    )
+}
 export function createPayment(auctionId, type) {
   return request(`/api/payments/v2/auctions/${auctionId}`, {
     method: 'POST',

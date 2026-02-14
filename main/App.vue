@@ -146,10 +146,10 @@
         </div>
         <div v-else class="property-grid">
           <a
-            v-for="item in properties"
-            :key="item.id"
-            :href="'/api/properties/v1/' + item.id"
-            class="property-card"
+              v-for="item in properties"
+              :key="item.id"
+              :href="getDetailLink(item)"
+              class="property-card"
           >
             <div class="card-thumb">
               <img
@@ -378,6 +378,15 @@ function toggleSidebar() {
 
 function closeSidebar() {
   sidebarOpen.value = false
+}
+
+function getDetailLink(item) {
+  if (item.auction && item.auction.status === 'OPEN') {
+    return `/auction-property-detail?propertyId=${item.id}`
+  }
+
+  // 경매중이 아닐 때 기존 매물 상세 TODO 아직 없음
+  return `/property-detail.html?propertyId=${item.id}`
 }
 
 </script>

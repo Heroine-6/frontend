@@ -71,6 +71,7 @@ export default defineConfig(({ mode }) => {
           'payment-fail': resolve(__dirname, 'payment-fail.html'),
           chat: resolve(__dirname, 'chat.html'),
           'auction-detail': resolve(__dirname, 'auction-detail.html'),
+          'auction-property-detail': resolve(__dirname, 'auction-property-detail.html'),
           'bid-register': resolve(__dirname, 'bid-register.html')
         }
       }

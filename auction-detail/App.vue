@@ -90,7 +90,7 @@
                   </div>
                   <div class="dutch-status-item">
                     <span class="dutch-status-label">종료</span>
-                    <span class="dutch-status-value">{{ formatDateTime(auctionInfo.endedAt) }}</span>
+                    <span class="dutch-status-value">{{ formatEndDate(auctionInfo.endedAt) }}</span>
                   </div>
                 </div>
               </div>
@@ -147,7 +147,7 @@
           <!-- 액션 버튼 -->
           <div class="action-section">
             <button v-if="auctionStatus === 'OPEN'" class="btn-primary" @click="goToBid">입찰하기</button>
-            <button class="btn-chat" @click="goToChat">실시간 채팅 / 문의하기</button>
+            <button class="btn-chat" @click="goToChat">문의하기</button>
           </div>
         </template>
 
@@ -217,7 +217,7 @@
                   </div>
                   <div class="dutch-status-item">
                     <span class="dutch-status-label">종료</span>
-                    <span class="dutch-status-value">{{ formatDateTime(auctionInfo.endedAt) }}</span>
+                    <span class="dutch-status-value">{{ formatEndDate(auctionInfo.endedAt) }}</span>
                   </div>
                 </div>
               </div>
@@ -242,7 +242,7 @@
           <!-- 액션 버튼 -->
           <div class="action-section">
             <button v-if="auctionStatus === 'OPEN'" class="btn-primary" @click="goToBid">입찰하기</button>
-            <button class="btn-chat" @click="goToChat">실시간 채팅 / 문의하기</button>
+            <button class="btn-chat" @click="goToChat">문의하기</button>
           </div>
         </template>
       </div>
@@ -468,6 +468,15 @@ function formatDateTime(datetime) {
   return `${y}-${m}-${day} ${h}:${min}`
 }
 
+function formatEndDate(datetime) {
+  if (!datetime) return '-'
+  const d = new Date(datetime)
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day} 23:59`
+}
+
 function formatCountdownInline() {
   const t = timeRemaining.value
   const parts = []
@@ -582,11 +591,11 @@ function logout() {
 .auction-container {
   background: var(--color-bg);
   min-height: calc(100vh - 64px);
-  padding: 20px 24px;
+  padding: 40px 48px;
 }
 
 .auction-inner {
-  max-width: 1400px;
+  max-width: 1100px;
   margin: 0 auto;
 }
 
@@ -622,14 +631,14 @@ function logout() {
 
 .action-section {
   display: flex;
-  gap: 12px;
+  gap: 16px;
   justify-content: center;
-  padding-top: 20px;
+  padding-top: 32px;
 }
 
 .btn-primary {
-  padding: 14px 40px;
-  font-size: 16px;
+  padding: 10px 24px;
+  font-size: 14px;
   font-weight: 600;
   color: #fff;
   background: var(--color-primary);
@@ -642,8 +651,8 @@ function logout() {
 .btn-primary:hover { background: var(--color-primary-hover); }
 
 .btn-secondary {
-  padding: 14px 40px;
-  font-size: 16px;
+  padding: 10px 24px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--color-primary);
   background: #f0f7ff;
@@ -851,7 +860,7 @@ function logout() {
 
 /* ========== 하향 경매 (Dutch) ========== */
 .dutch-page-header {
-  margin-bottom: 24px;
+  margin-bottom: 32px;
 }
 
 .dutch-title-row {
@@ -881,15 +890,15 @@ function logout() {
 .dutch-layout {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 20px;
-  margin-bottom: 20px;
+  gap: 28px;
+  margin-bottom: 28px;
 }
 
 /* 매물 정보 카드 */
 .dutch-property-card {
   background: var(--color-surface);
   border-radius: 12px;
-  padding: 20px;
+  padding: 24px;
   box-shadow: var(--shadow);
   border: 2px solid var(--color-primary);
 }
@@ -953,14 +962,14 @@ function logout() {
 .dutch-right-column {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 28px;
 }
 
 /* 경매 현황 카드 */
 .dutch-status-card {
   background: var(--color-surface);
   border-radius: 12px;
-  padding: 20px;
+  padding: 24px;
   box-shadow: var(--shadow);
 }
 
@@ -1005,7 +1014,7 @@ function logout() {
 .english-bid-info-card {
   background: #f0f7ff;
   border-radius: 12px;
-  padding: 20px;
+  padding: 24px;
   box-shadow: var(--shadow);
 }
 
@@ -1018,7 +1027,7 @@ function logout() {
 .dutch-decrease-card {
   background: #fff0f3;
   border-radius: 12px;
-  padding: 20px;
+  padding: 24px;
   box-shadow: var(--shadow);
 }
 
@@ -1049,9 +1058,10 @@ function logout() {
 
 /* 채팅 버튼 */
 .btn-chat {
-  padding: 16px 48px;
-  font-size: 16px;
+  padding: 10px 24px;
+  font-size: 14px;
   font-weight: 600;
+  white-space: nowrap;
   color: #fff;
   background: #7c8db5;
   border: none;
@@ -1103,8 +1113,7 @@ function logout() {
 
   .bid-history-list-compact { max-height: 300px; }
 
-  .action-section { flex-direction: column; }
-  .btn-primary, .btn-secondary, .btn-chat { width: 100%; }
+  .action-section { flex-direction: column; align-items: center; }
 
   .dutch-title-row { flex-direction: column; align-items: flex-start; gap: 12px; }
   .dutch-title { font-size: 20px; }

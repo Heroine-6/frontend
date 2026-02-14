@@ -205,8 +205,7 @@ async function fetchProperties() {
   page.value = 0
   try {
     const params = buildSearchParams()
-    const useSearch = searchKeyword.value || selectedType.value || selectedStatus.value
-    const endpoint = useSearch ? '/api/properties/v1/search' : '/api/properties/v1'
+    const endpoint = '/api/properties/v1'
     const res = await fetch(`${endpoint}?${params}`)
     const json = await res.json()
     if (json.success && json.data) {

@@ -228,7 +228,7 @@
                     </button>
                     <button
                       class="btn-action btn-action-outline"
-                      @click="viewDetail(item.id)"
+                      @click="viewDetail(item)"
                     >
                       매물 상세보기
                     </button>
@@ -446,8 +446,13 @@ async function cancelAuction(item) {
   }
 }
 
-function viewDetail(propertyId) {
-  window.location.href = `/property-detail.html?id=${propertyId}`
+function viewDetail(item) {
+  // 경매가 있고, 경매 상태가 OPEN일 때만 경매 상세로 이동
+  if (item.auction && item.auction.status === 'OPEN') {
+    window.location.href = `/auction-property-detail?propertyId=${item.id}`
+  } else {
+    window.location.href = `/property-detail.html?propertyId=${item.id}`
+  }
 }
 
 function viewAuctionDetail(auction) {

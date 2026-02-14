@@ -72,7 +72,8 @@ export default defineConfig(({ mode }) => {
           chat: resolve(__dirname, 'chat.html'),
           'auction-detail': resolve(__dirname, 'auction-detail.html'),
           'auction-property-detail': resolve(__dirname, 'auction-property-detail.html'),
-          'bid-register': resolve(__dirname, 'bid-register.html')
+          'bid-register': resolve(__dirname, 'bid-register.html'),
+          'property-detail': resolve(__dirname, 'property-detail.html')
         }
       }
     }

@@ -8,6 +8,19 @@
 
       <form @submit.prevent="handleSubmit">
         <div class="form-group">
+          <label class="form-label" for="name">이름</label>
+          <input
+            id="name"
+            v-model="form.name"
+            type="text"
+            class="form-input"
+            :class="{ error: errors.name }"
+            placeholder="홍길동"
+            @blur="validate('name')"
+          />
+          <p v-if="errors.name" class="error-message">{{ errors.name }}</p>
+        </div>
+        <div class="form-group">
           <label class="form-label" for="phone">전화번호</label>
           <input
             id="phone"
@@ -20,7 +33,6 @@
           />
           <p v-if="errors.phone" class="error-message">{{ errors.phone }}</p>
         </div>
-
         <div class="form-group">
           <label class="form-label" for="address">주소</label>
           <input
@@ -46,23 +58,24 @@
 <script setup>
 import { reactive, ref } from 'vue'
 import { completeKakaoProfile } from '../shared/api.js'
-import { validatePhone, validateAddress } from '../shared/validators.js'
+import { validateName, validatePhone, validateAddress } from '../shared/validators.js'
 
-const form = reactive({ phone: '', address: '' })
-const errors = reactive({ phone: '', address: '' })
+const form = reactive({ name: '', phone: '', address: '' })
+const errors = reactive({ name: '', phone: '', address: '' })
 const loading = ref(false)
 const errorMsg = ref('')
 
-const validators = { phone: validatePhone, address: validateAddress }
+const validators = { name: validateName, phone: validatePhone, address: validateAddress }
 
 function validate(field) {
   errors[field] = validators[field](form[field])
 }
 
 function validateAll() {
+  validate('name')
   validate('phone')
   validate('address')
-  return !errors.phone && !errors.address
+  return !errors.name && !errors.phone && !errors.address
 }
 
 async function handleSubmit() {
@@ -71,7 +84,7 @@ async function handleSubmit() {
 
   loading.value = true
   try {
-    await completeKakaoProfile(form.phone, form.address)
+    await completeKakaoProfile(form.name, form.phone, form.address)
     window.location.href = '/'
   } catch (e) {
     errorMsg.value = e.message

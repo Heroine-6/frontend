@@ -192,7 +192,7 @@
           <a
               v-for="item in properties"
               :key="item.id"
-              :href="'/property-detail.html?id=' + item.id"
+              :href="getDetailUrl(item)"
               class="list-card"
           >
             <div class="list-thumb">
@@ -396,7 +396,7 @@ function buildParams() {
   }
 
   params.set('page', String(page.value))
-  params.set('size', '20')
+  params.set('size', '10')
 
   return params
 }
@@ -537,6 +537,15 @@ function formatDate(dateStr) {
   const d = new Date(dateStr)
   return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`
 }
+
+function getDetailUrl(item) {
+  console.log(item)
+  if (item.auction && item.auction.status === 'OPEN') {
+    return `/auction-property-detail?id=${item.id}`
+  }
+  return `/property-detail?id=${item.id}`
+}
+
 </script>
 
 <style scoped>

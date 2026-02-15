@@ -539,12 +539,16 @@ function formatDate(dateStr) {
 }
 
 function getDetailUrl(item) {
-  console.log(item)
-  if (item.auction && item.auction.status === 'OPEN') {
-    return `/auction-property-detail?id=${item.id}`
+  const isOpen = item.auction && item.auction.status === 'OPEN'
+
+  if (isOpen) {
+    return `/auction-property-detail?propertyId=${item.id}`
   }
+
   return `/property-detail?id=${item.id}`
 }
+
+
 
 </script>
 

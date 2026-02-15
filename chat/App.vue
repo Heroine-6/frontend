@@ -505,12 +505,11 @@ function isSellerInRoom(room) {
 }
 
 function getRoomTitle(room) {
-  const info = propertyCache.value[room.propertyId]
-  if (isSellerInRoom(room)) {
-    // 판매자 → 상대방(입찰자) 이름
-    return (info && info.bidderName) || '입찰자'
+  if (userRole.value === 'SELLER') {
+    return '입찰자 #' + (room.bidderId || '?')
   }
-  // 입찰자 → 매물명
+  // GENERAL: 매물명
+  const info = propertyCache.value[room.propertyId]
   return (info && info.propertyName) || '매물'
 }
 

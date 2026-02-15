@@ -209,7 +209,7 @@ const mapError = ref('')
 onMounted(async () => {
   checkAuth()
 
-  const id = new URLSearchParams(location.search).get('propertyId')
+  const id = new URLSearchParams(location.search).get('id') || new URLSearchParams(location.search).get('propertyId')
   if (!id) {
     loading.value = false
     return

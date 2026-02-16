@@ -101,7 +101,7 @@ export async function kakaoLogin(code) {
   return data
 }
 
-export function completeKakaoProfile(phone, address) {
+export function completeKakaoProfile(name, phone, address) {
   const token = localStorage.getItem('accessToken')
   return fetch('/api/auth/v2/kakao/complete', {
     method: 'PATCH',
@@ -109,7 +109,7 @@ export function completeKakaoProfile(phone, address) {
       'Content-Type': 'application/json',
       'Authorization': token,
     },
-    body: JSON.stringify({ phone, address }),
+    body: JSON.stringify({ name, phone, address }),
   }).then(async res => {
     const data = await res.json()
     if (!res.ok || !data.success) {

@@ -489,9 +489,9 @@ function goToBid() {
 
 function goToPropertyDetail() {
   if (propertyInfo.value?.id) {
-    window.location.href = `/property-detail.html?id=${propertyInfo.value.id}`
+    window.location.href = `/auction-property-detail.html?id=${propertyInfo.value.id}&auctionId=${auctionId.value}`
   } else if (auctionInfo.value?.propertyId) {
-    window.location.href = `/property-detail.html?id=${auctionInfo.value.propertyId}`
+    window.location.href = `/auction-property-detail.html?id=${auctionInfo.value.propertyId}&auctionId=${auctionId.value}`
   } else {
     alert('매물 정보가 없습니다.')
   }

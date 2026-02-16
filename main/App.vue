@@ -1,32 +1,5 @@
 <template>
-  <div class="page">
-    <!-- 헤더 -->
-    <header class="header">
-      <div class="header-inner">
-        <!-- 왼쪽 그룹 -->
-        <div class="header-left">
-          <button class="menu-btn" @click="toggleSidebar">☰</button>
-          <a href="/" class="logo">부동부동</a>
-        </div>
-
-        <!-- 오른쪽 그룹 -->
-        <div class="header-right">
-          <nav class="header-nav">
-            <template v-if="isLoggedIn">
-              <a href="/mypage" class="btn-text">마이페이지</a>
-              <span class="user-greeting">{{ userName }}님</span>
-              <button class="btn-text" @click="logout">로그아웃</button>
-            </template>
-            <template v-else>
-              <a href="/signin" class="btn-text">로그인</a>
-              <a href="/signup" class="btn-header-primary">회원가입</a>
-            </template>
-          </nav>
-        </div>
-
-      </div>
-
-    </header>
+  <AppLayout>
     <div class="page">
       <!-- Overlay -->
       <div v-if="sidebarOpen" class="overlay" @click="closeSidebar"></div>
@@ -200,11 +173,12 @@
         <p>&copy; 2025 부동부동. 부동산 경매 플랫폼</p>
       </div>
     </footer>
-  </div>
+  </AppLayout>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import AppLayout from "../components/AppLayout.vue";
 
 const propertyTypes = [
   { label: '전체', value: '' },

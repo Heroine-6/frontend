@@ -38,10 +38,22 @@ onMounted(async () => {
 
     status.value = 'success'
     message.value = '결제가 완료되었습니다.'
+
+    const pending = localStorage.getItem('pendingBid')
+    if (pending) {
+      const parsed = JSON.parse(pending)
+
+      setTimeout(() => {
+        window.location.href =
+            `/bid-register?auctionId=${parsed.auctionId}&type=${parsed.type}`
+      }, 1200)
+    }
+
   } catch (e) {
     status.value = 'fail'
     message.value = '결제 승인 요청에 실패했습니다.'
   }
+
 })
 
 const goToPayments = () => {
@@ -81,7 +93,7 @@ const retry = () => {
       </div>
 
       <div class="actions">
-        <button v-if="status === 'success'" class="btn primary" @click="goToPayments">
+        <button v-if="status === 'success'&& !localStorage.getItem('pendingBid')" class="btn primary" @click="goToPayments">
           결제 내역 보기
         </button>
 

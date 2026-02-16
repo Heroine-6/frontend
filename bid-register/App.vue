@@ -161,6 +161,25 @@
               <span>2. 낙찰 시 해당 매물의 매매 절차를 이행할 것이다. (필수)</span>
             </label>
           </div>
+          <!-- 🔥 보증금 결제 안내 모달 -->
+          <div v-if="showDepositModal" class="modal-overlay">
+            <div class="modal-box">
+              <h3 class="modal-title">보증금 결제 필요</h3>
+              <p class="modal-text">
+                입찰 전 최초 1회 시작가의 10% 보증금을 먼저 결제해야 합니다.<br />
+                결제하시겠습니까?
+              </p>
+
+              <div class="modal-actions">
+                <button class="btn-cancel" @click="showDepositModal = false">
+                  취소
+                </button>
+                <button class="btn-confirm" @click="proceedDepositPayment">
+                  결제하기
+                </button>
+              </div>
+            </div>
+          </div>
 
           <div class="submit-section">
             <button
@@ -207,6 +226,8 @@ const marketLoading = ref(false)
 const agree1 = ref(false)
 const agree2 = ref(false)
 const submitting = ref(false)
+const showDepositModal = ref(false)
+
 
 // 카운트다운
 const timeRemaining = ref({ days: 0, hours: 0, minutes: 0, seconds: 0 })
@@ -243,7 +264,39 @@ onMounted(async () => {
   }
 
   await fetchData()
+
+  // 🔥 결제 후 자동 입찰 재시도
+  const pending = localStorage.getItem('pendingBid')
+  if (pending) {
+    const parsed = JSON.parse(pending)
+
+    if (parsed.auctionId === auctionId.value) {
+      localStorage.removeItem('pendingBid')
+
+      // 약간의 UX 안정성을 위해 약간 지연
+      setTimeout(async () => {
+        try {
+          submitting.value = true
+
+          if (parsed.type === 'ENGLISH') {
+            await createBid(parsed.auctionId, { price: parsed.price })
+          } else {
+            await createDutchBid(parsed.auctionId)
+          }
+
+          alert('보증금 결제 후 자동으로 입찰이 완료되었습니다!')
+          window.location.href = `/auction-detail?id=${parsed.auctionId}`
+
+        } catch (e) {
+          console.error('자동 입찰 실패:', e)
+        } finally {
+          submitting.value = false
+        }
+      }, 500)
+    }
+  }
 })
+
 
 onUnmounted(() => {
   if (countdownInterval) clearInterval(countdownInterval)
@@ -325,39 +378,40 @@ async function submitBid() {
 
   } catch (e) {
     if (e.message === '보증금 결제가 먼저 필요합니다') {
-      localStorage.setItem('pendingBid', JSON.stringify({
-        auctionId: auctionId.value,
-        type: auctionType.value,
-        price: bidPrice.value
-      }))
-
-      const res = await createDepositPayment(
-          auctionId.value,
-          auctionType.value === 'ENGLISH' ? bidPrice.value : null
-      )
-
-      const { orderId, orderName, amount } = res.data
-
-      const tossPayments = window.TossPayments(
-          import.meta.env.VITE_TOSS_CLIENT_KEY
-      )
-
-      await tossPayments.requestPayment('CARD', {
-        amount,
-        orderId,
-        orderName,
-        successUrl: window.location.origin + '/payment-success.html',
-        failUrl: window.location.origin + '/payment-fail.html'
-      })
-
+      showDepositModal.value = true
       return
     }
-
-    alert(e.message || '입찰 실패')
-
-  } finally {
-    submitting.value = false
   }
+}
+
+async function proceedDepositPayment() {
+
+  showDepositModal.value = false
+
+  localStorage.setItem('pendingBid', JSON.stringify({
+    auctionId: auctionId.value,
+    type: auctionType.value,
+    price: bidPrice.value
+  }))
+
+  const res = await createDepositPayment(
+      auctionId.value,
+      auctionType.value === 'ENGLISH' ? bidPrice.value : null
+  )
+
+  const { orderId, orderName, amount } = res.data
+
+  const tossPayments = window.TossPayments(
+      import.meta.env.VITE_TOSS_CLIENT_KEY
+  )
+
+  await tossPayments.requestPayment('CARD', {
+    amount,
+    orderId,
+    orderName,
+    successUrl: window.location.origin + '/payment-success.html',
+    failUrl: window.location.origin + '/payment-fail.html'
+  })
 }
 
 
@@ -692,6 +746,68 @@ function goBack() {
 .btn-submit:disabled {
   background: #ccc;
   cursor: not-allowed;
+}
+
+/* 🔥 모달 스타일 */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.modal-box {
+  background: #fff;
+  padding: 28px;
+  width: 420px;
+  max-width: 90%;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+  animation: fadeUp 0.2s ease;
+}
+
+.modal-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+
+.modal-text {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.btn-cancel {
+  padding: 8px 18px;
+  background: #eee;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.btn-confirm {
+  padding: 8px 18px;
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+@keyframes fadeUp {
+  from { transform: translateY(8px); opacity: 0 }
+  to { transform: translateY(0); opacity: 1 }
 }
 
 /* 반응형 */

@@ -1,29 +1,5 @@
 <template>
-  <div class="page">
-    <!-- ================= 헤더 (메인과 동일) ================= -->
-    <header class="header">
-      <div class="header-inner">
-        <div class="header-left">
-          <button class="menu-btn" @click="toggleSidebar">☰</button>
-          <a href="/" class="logo">부동부동</a>
-        </div>
-
-        <div class="header-right">
-          <nav class="header-nav">
-            <template v-if="isLoggedIn">
-              <a href="/mypage" class="btn-text">마이페이지</a>
-              <span class="user-greeting">{{ userName }}님</span>
-              <button class="btn-text" @click="logout">로그아웃</button>
-            </template>
-            <template v-else>
-              <a href="/signin" class="btn-text">로그인</a>
-              <a href="/signup" class="btn-header-primary">회원가입</a>
-            </template>
-          </nav>
-        </div>
-      </div>
-    </header>
-
+  <AppLayout>
     <!-- Overlay -->
     <div v-if="sidebarOpen" class="overlay" @click="closeSidebar"></div>
 
@@ -189,11 +165,12 @@
         </aside>
       </div>
     </section>
-  </div>
+  </AppLayout>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, nextTick } from 'vue'
+import AppLayout from "../components/AppLayout.vue";
 
 const data = ref(null)
 const loading = ref(true)
@@ -209,7 +186,7 @@ const mapError = ref('')
 onMounted(async () => {
   checkAuth()
 
-  const id = new URLSearchParams(location.search).get('propertyId')
+  const id = new URLSearchParams(location.search).get('id') || new URLSearchParams(location.search).get('propertyId')
   if (!id) {
     loading.value = false
     return
@@ -360,7 +337,7 @@ function formatDateOnly(v) {
 }
 
 /* ===== Links ===== */
-function goToBidHistory() { location.href = `/bids?auctionId=${data.value.auctionId}` }
+function goToBidHistory() { location.href = `/auction-detail?id=${data.value.auctionId}` }
 function goToBidPage() { location.href = `/payment-checkout.html?auctionId=${data.value.auctionId}` }
 </script>
 

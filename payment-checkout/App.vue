@@ -1,17 +1,5 @@
 <template>
-  <div class="page">
-    <!-- 헤더 -->
-    <header class="header">
-      <div class="header-inner">
-        <a href="/" class="logo">부동부동</a>
-        <nav class="header-nav">
-          <a href="/search" class="btn-text">매물 검색</a>
-          <a href="/mypage" class="btn-text">마이페이지</a>
-          <span class="user-greeting">{{ userName }}님</span>
-          <button class="btn-text" @click="logout">로그아웃</button>
-        </nav>
-      </div>
-    </header>
+  <AppLayout>
 
     <!-- 컨텐츠 -->
     <div class="checkout-container">
@@ -225,12 +213,13 @@
 
     <!-- 토스트 -->
     <div class="toast" :class="{ show: toastVisible }">{{ toastMsg }}</div>
-  </div>
+  </AppLayout>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { getMyPaymentAuctions, getPaymentAuctionInfo, createPayment } from '../shared/api.js'
+import AppLayout from "../components/AppLayout.vue";
 
 // URL 파라미터
 const urlParams = new URLSearchParams(window.location.search)

@@ -1,23 +1,5 @@
 <template>
-  <div class="page">
-    <!-- 헤더 -->
-    <header class="header">
-      <div class="header-inner">
-        <a href="/" class="logo">부동부동</a>
-        <nav class="header-nav">
-          <a href="/search" class="nav-link">매물 검색</a>
-          <template v-if="isLoggedIn">
-            <a href="/mypage" class="btn-text">마이페이지</a>
-            <span class="user-greeting">{{ userName }}님</span>
-            <button class="btn-text" @click="logout">로그아웃</button>
-          </template>
-          <template v-else>
-            <a href="/signin" class="btn-text">로그인</a>
-            <a href="/signup" class="btn-header-primary">회원가입</a>
-          </template>
-        </nav>
-      </div>
-    </header>
+  <AppLayout>
 
     <!-- 로딩 -->
     <div v-if="loading" class="state-box">매물 정보를 불러오는 중...</div>
@@ -117,17 +99,18 @@
 
         <!-- 하단 액션 -->
         <div class="action-bar">
-          <button class="btn-back-outline" @click="goBack">목록으로</button>
+          <button class="btn-back-outline" @click="goBack">이전으로</button>
           <button v-if="userRole === 'GENERAL'" class="btn-inquiry" @click="goToChat">문의하기</button>
         </div>
       </section>
     </div>
-  </div>
+  </AppLayout>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
 import { getPropertyDetail } from '../shared/api.js'
+import AppLayout from "../components/AppLayout.vue";
 
 const property = ref(null)
 const loading = ref(true)

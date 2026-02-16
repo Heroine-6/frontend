@@ -1,23 +1,5 @@
 <template>
-  <div class="page">
-    <!-- 헤더 -->
-    <header class="header">
-      <div class="header-inner">
-        <a href="/budongbudong" class="logo">부동부동</a>
-        <nav class="header-nav">
-          <a href="/search" class="nav-link active">매물 검색</a>
-          <template v-if="isLoggedIn">
-            <a href="/mypage" class="btn-text">마이페이지</a>
-            <span class="user-greeting">{{ userName }}님</span>
-            <button class="btn-text" @click="logout">로그아웃</button>
-          </template>
-          <template v-else>
-            <a href="/signin" class="btn-text">로그인</a>
-            <a href="/signup" class="btn-header-primary">회원가입</a>
-          </template>
-        </nav>
-      </div>
-    </header>
+  <AppLayout>
 
     <div class="search-layout">
       <!-- 사이드바 필터 -->
@@ -192,7 +174,7 @@
           <a
               v-for="item in properties"
               :key="item.id"
-              :href="'/property-detail.html?id=' + item.id"
+              :href="getDetailUrl(item)"
               class="list-card"
           >
             <div class="list-thumb">
@@ -257,11 +239,12 @@
         </div>
       </main>
     </div>
-  </div>
+  </AppLayout>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import AppLayout from "../components/AppLayout.vue";
 
 const propertyTypes = [
   { label: '전체', value: '' },
@@ -396,7 +379,7 @@ function buildParams() {
   }
 
   params.set('page', String(page.value))
-  params.set('size', '20')
+  params.set('size', '10')
 
   return params
 }
@@ -537,6 +520,19 @@ function formatDate(dateStr) {
   const d = new Date(dateStr)
   return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`
 }
+
+function getDetailUrl(item) {
+  const isOpen = item.auction && item.auction.status === 'OPEN'
+
+  if (isOpen) {
+    return `/auction-property-detail?propertyId=${item.id}`
+  }
+
+  return `/property-detail?id=${item.id}`
+}
+
+
+
 </script>
 
 <style scoped>

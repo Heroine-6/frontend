@@ -1,17 +1,5 @@
 <template>
-  <div class="page">
-    <!-- 헤더 -->
-    <header class="header">
-      <div class="header-inner">
-        <a href="/" class="logo">부동부동</a>
-        <nav class="header-nav">
-          <a href="/search" class="btn-text">매물 검색</a>
-          <a href="/mypage" class="btn-text">마이페이지</a>
-          <button class="btn-text" @click="goBack">뒤로가기</button>
-        </nav>
-      </div>
-    </header>
-
+  <AppLayout>
     <div class="bid-container">
       <div class="bid-inner">
         <h1 class="page-title">입찰 등록</h1>
@@ -186,7 +174,7 @@
         </template>
       </div>
     </div>
-  </div>
+  </AppLayout>
 </template>
 
 <script setup>
@@ -197,8 +185,10 @@ import {
   getMyProfile,
   createBid,
   createDutchBid,
-  compareWithMarket
+  compareWithMarket,
+  createDepositPayment
 } from '../shared/api.js'
+import AppLayout from "../components/AppLayout.vue";
 
 // URL 파라미터
 const params = new URLSearchParams(window.location.search)
@@ -320,28 +310,56 @@ function onBidPriceChange() {
 
 async function submitBid() {
   if (!canSubmit.value || submitting.value) return
-
   submitting.value = true
+
   try {
+
     if (auctionType.value === 'ENGLISH') {
-      const res = await createBid(auctionId.value, { price: bidPrice.value })
-      if (res.data?.bidStatus === 'REJECTED') {
-        alert(res.data.message || '입찰이 거절되었습니다.')
-      } else {
-        alert('입찰이 완료되었습니다!')
-        window.location.href = `/auction-detail.html?id=${auctionId.value}&type=ENGLISH`
-      }
+      await createBid(auctionId.value, { price: bidPrice.value })
     } else {
-      const res = await createDutchBid(auctionId.value)
-      alert('낙찰되었습니다! 경매가 종료됩니다.')
-      window.location.href = `/auction-detail.html?id=${auctionId.value}&type=DUTCH`
+      await createDutchBid(auctionId.value)
     }
+
+    alert('입찰이 완료되었습니다!')
+    window.location.href = `/auction-detail.html?id=${auctionId.value}`
+
   } catch (e) {
-    alert(e.message || '입찰 처리 중 오류가 발생했습니다.')
+    if (e.message === '보증금 결제가 먼저 필요합니다') {
+      localStorage.setItem('pendingBid', JSON.stringify({
+        auctionId: auctionId.value,
+        type: auctionType.value,
+        price: bidPrice.value
+      }))
+
+      const res = await createDepositPayment(
+          auctionId.value,
+          auctionType.value === 'ENGLISH' ? bidPrice.value : null
+      )
+
+      const { orderId, orderName, amount } = res.data
+
+      const tossPayments = window.TossPayments(
+          import.meta.env.VITE_TOSS_CLIENT_KEY
+      )
+
+      await tossPayments.requestPayment('CARD', {
+        amount,
+        orderId,
+        orderName,
+        successUrl: window.location.origin + '/payment-success.html',
+        failUrl: window.location.origin + '/payment-fail.html'
+      })
+
+      return
+    }
+
+    alert(e.message || '입찰 실패')
+
   } finally {
     submitting.value = false
   }
 }
+
 
 // 카운트다운
 function startCountdown() {

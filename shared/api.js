@@ -40,11 +40,17 @@ async function request(url, options = {}) {
     return { success: true, data: null }
   }
 
-  const data = await res.json()
-  if (!res.ok || !data.success) {
-    throw new Error(data.message || '요청에 실패했습니다.')
-  }
-  return data
+    const data = await res.json()
+    if (!res.ok || !data.success) {
+        // 서버가 내려준 구조 그대로 던진다
+        throw {
+            errorCode: data.errorCode,
+            message: data.message,
+            status: res.status
+        }
+    }
+    return data
+
 }
 
 // ==================== 인증 API ====================
@@ -445,3 +451,26 @@ export function sendFirstMessage(propertyId, content) {
 export function getChatMessages(roomId, page = 0, size = 30) {
   return chatRequest(`/api/v2/chats/rooms/${roomId}/messages?page=${page}&size=${size}`)
 }
+export async function createDepositPayment(auctionId, bidAmount) {
+    const token = localStorage.getItem('accessToken')
+
+    const res = await fetch(`/api/payments/v2/auctions/${auctionId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `${token}`
+        },
+        body: JSON.stringify({
+            type: 'DEPOSIT'
+        })
+    })
+
+    if (!res.ok) {
+        const errorBody = await res.text()
+        console.error('결제 생성 실패 응답:', errorBody)
+        throw new Error(errorBody || '보증금 결제 생성 실패')
+    }
+
+    return res.json()
+}
+

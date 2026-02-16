@@ -280,7 +280,8 @@ async function fetchProperties() {
     const res = await fetch(`${endpoint}?${params}`)
     const json = await res.json()
     if (json.success && json.data) {
-      properties.value = json.data.content || []
+      const items = json.data.content || []
+      properties.value = items.filter(isVisibleOnMain)
       hasNext.value = json.data.hasNext || false
     }
   } catch {
@@ -300,7 +301,8 @@ async function loadMore() {
     const res = await fetch(`${endpoint}?${params}`)
     const json = await res.json()
     if (json.success && json.data) {
-      properties.value.push(...(json.data.content || []))
+      const items = (json.data.content || []).filter(isVisibleOnMain)
+      properties.value.push(...items)
       hasNext.value = json.data.hasNext || false
     }
   } catch {
@@ -350,6 +352,10 @@ function badgeClass(status) {
     'badge-open': status === 'OPEN',
     'badge-closed': status === 'CLOSED' || status === 'FAILED' || status === 'CANCELLED',
   }
+}
+
+function isVisibleOnMain(item) {
+  return item?.auction?.status !== 'CANCELLED'
 }
 
 function formatPrice(price) {

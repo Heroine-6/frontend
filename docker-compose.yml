@@ -1,0 +1,15 @@
+version: "3.8"
+
+services:
+  nginx:
+    image: ${DOCKER_USERNAME}/budong-frontend:latest
+    ports:
+      - "80:80"
+    environment:
+      - CHAT_SERVER=${CHAT_SERVER}
+    restart: unless-stopped
+
+networks:
+  default:
+    name: budong-network
+    external: true

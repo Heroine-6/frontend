@@ -241,7 +241,6 @@ function onDongChange() {
   geocoder.addressSearch(address, (result, status) => {
     if (status === kakao.maps.services.Status.OK) {
       const coords = new kakao.maps.LatLng(result[0].y, result[0].x)
-      preventNextFetch = true;
       map.setCenter(coords)
     } else { alert('선택한 지역의 좌표를 찾을 수 없습니다.') }
   })

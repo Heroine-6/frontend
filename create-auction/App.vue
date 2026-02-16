@@ -1,19 +1,5 @@
 <template>
-  <div class="page">
-    <!-- 헤더 -->
-    <header class="header">
-      <div class="header-inner">
-        <a href="/" class="logo">부동부동</a>
-        <nav class="header-nav">
-          <a href="/search.html" class="btn-text">매물 검색</a>
-          <a href="/my-properties.html" class="btn-text">내 매물 관리</a>
-          <a href="/mypage.html" class="btn-text">마이페이지</a>
-          <span class="user-greeting">{{ userName }}님</span>
-          <button class="btn-text" @click="logout">로그아웃</button>
-        </nav>
-      </div>
-    </header>
-
+  <AppLayout>
     <!-- 컨텐츠 -->
     <div class="container">
       <div class="form-wrapper">
@@ -158,12 +144,13 @@
         </div>
       </div>
     </div>
-  </div>
+  </AppLayout>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
 import { createAuction, createDutchAuction } from '../shared/api.js'
+import AppLayout from "../components/AppLayout.vue";
 
 const userName = ref('')
 const propertyId = ref(null)

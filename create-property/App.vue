@@ -1,19 +1,5 @@
 <template>
-  <div class="page">
-    <!-- 헤더 -->
-    <header class="header">
-      <div class="header-inner">
-        <a href="/" class="logo">부동부동</a>
-        <nav class="header-nav">
-          <a href="/search.html" class="btn-text">매물 검색</a>
-          <a href="/my-properties.html" class="btn-text">내 매물 관리</a>
-          <a href="/mypage.html" class="btn-text">마이페이지</a>
-          <span class="user-greeting">{{ userName }}님</span>
-          <button class="btn-text" @click="logout">로그아웃</button>
-        </nav>
-      </div>
-    </header>
-
+  <AppLayout>
     <!-- 권한 없음 -->
     <div v-if="!authorized" class="access-denied">
       <p class="denied-icon">🔒</p>
@@ -263,12 +249,13 @@
 
       <div class="footer">부동부동 · 매물 등록</div>
     </div>
-  </div>
+  </AppLayout>
 </template>
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
 import { getPresignedUrls, uploadFileToPresignedUrl } from '../shared/api.js'
+import AppLayout from "../components/AppLayout.vue";
 
 // ====== 상수 ======
 const propertyTypes = [

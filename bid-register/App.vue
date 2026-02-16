@@ -1,17 +1,5 @@
 <template>
-  <div class="page">
-    <!-- 헤더 -->
-    <header class="header">
-      <div class="header-inner">
-        <a href="/" class="logo">부동부동</a>
-        <nav class="header-nav">
-          <a href="/search" class="btn-text">매물 검색</a>
-          <a href="/mypage" class="btn-text">마이페이지</a>
-          <button class="btn-text" @click="goBack">뒤로가기</button>
-        </nav>
-      </div>
-    </header>
-
+  <AppLayout>
     <div class="bid-container">
       <div class="bid-inner">
         <h1 class="page-title">입찰 등록</h1>
@@ -186,7 +174,7 @@
         </template>
       </div>
     </div>
-  </div>
+  </AppLayout>
 </template>
 
 <script setup>
@@ -200,6 +188,7 @@ import {
   compareWithMarket,
   createDepositPayment
 } from '../shared/api.js'
+import AppLayout from "../components/AppLayout.vue";
 
 // URL 파라미터
 const params = new URLSearchParams(window.location.search)

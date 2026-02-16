@@ -179,7 +179,7 @@
                 class="btn-auction"
                 @click.prevent.stop="goToAuction(item.auction.id)"
               >
-                경매 참여
+                경매 진행 정보
               </button>
             </div>
           </a>

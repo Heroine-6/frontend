@@ -6,9 +6,15 @@
         <a href="/" class="logo">부동부동</a>
         <nav class="header-nav">
           <a href="/search" class="btn-text">매물 검색</a>
-          <a href="/mypage" class="btn-text">마이페이지</a>
-          <span class="user-greeting">{{ userName }}님</span>
-          <button class="btn-text" @click="logout">로그아웃</button>
+          <template v-if="isLoggedIn">
+            <a href="/mypage" class="btn-text">마이페이지</a>
+            <span class="user-greeting">{{ userName }}님</span>
+            <button class="btn-text" @click="logout">로그아웃</button>
+          </template>
+          <template v-else>
+            <a href="/signin" class="btn-text">로그인</a>
+            <a href="/signup" class="btn-text">회원가입</a>
+          </template>
         </nav>
       </div>
     </header>
@@ -144,8 +150,8 @@
             </div>
           </div>
 
-          <!-- 액션 버튼 -->
-          <div class="action-section">
+          <!-- 액션 버튼 (GENERAL 유저만) -->
+          <div v-if="userRole === 'GENERAL'" class="action-section">
             <button v-if="auctionStatus === 'OPEN'" class="btn-primary" @click="goToBid">입찰하기</button>
             <button class="btn-chat" @click="goToChat">문의하기</button>
           </div>
@@ -239,8 +245,8 @@
             </div>
           </div>
 
-          <!-- 액션 버튼 -->
-          <div class="action-section">
+          <!-- 액션 버튼 (GENERAL 유저만) -->
+          <div v-if="userRole === 'GENERAL'" class="action-section">
             <button v-if="auctionStatus === 'OPEN'" class="btn-primary" @click="goToBid">입찰하기</button>
             <button class="btn-chat" @click="goToChat">문의하기</button>
           </div>
@@ -262,6 +268,7 @@ const auctionType = ref(params.get('type') || 'ENGLISH')
 const loading = ref(false)
 const error = ref('')
 const userName = ref('사용자')
+const userRole = ref('')
 const auctionInfo = ref(null)
 const statistics = ref(null)
 const auctionStatus = ref(null)
@@ -280,19 +287,19 @@ const currentPrice = computed(() => {
   return auctionInfo.value.currentPrice || auctionInfo.value.startPrice || 0
 })
 
+const isLoggedIn = ref(false)
+
 onMounted(async () => {
   const token = localStorage.getItem('accessToken')
-  if (!token) {
-    alert('로그인이 필요합니다')
-    window.location.href = '/signin.html'
-    return
-  }
-
-  try {
-    const payload = JSON.parse(atob(token.split('.')[1]))
-    userName.value = payload.name || payload.username || '사용자'
-  } catch (e) {
-    console.error('토큰 파싱 실패:', e)
+  if (token) {
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]))
+      userName.value = payload.name || payload.username || '사용자'
+      userRole.value = payload.userRole || ''
+      isLoggedIn.value = true
+    } catch (e) {
+      console.error('토큰 파싱 실패:', e)
+    }
   }
 
   if (auctionId.value) {
@@ -501,9 +508,9 @@ function goToBid() {
 
 function goToPropertyDetail() {
   if (propertyInfo.value?.id) {
-    window.location.href = `/property-detail.html?id=${propertyInfo.value.id}`
+    window.location.href = `/auction-property-detail.html?id=${propertyInfo.value.id}&auctionId=${auctionId.value}`
   } else if (auctionInfo.value?.propertyId) {
-    window.location.href = `/property-detail.html?id=${auctionInfo.value.propertyId}`
+    window.location.href = `/auction-property-detail.html?id=${auctionInfo.value.propertyId}&auctionId=${auctionId.value}`
   } else {
     alert('매물 정보가 없습니다.')
   }

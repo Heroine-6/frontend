@@ -30,7 +30,7 @@
         <!-- 3개의 큰 카드 -->
         <div class="cards-container">
           <!-- 결제 카드 -->
-          <div class="main-card">
+          <div v-if="isGeneral" class="main-card">
             <h2 class="card-title">결제</h2>
             <div class="card-content">
               <a href="/payments.html" class="menu-item">
@@ -52,7 +52,7 @@
           <div class="main-card">
             <h2 class="card-title">입찰</h2>
             <div class="card-content">
-              <a href="/bids.html" class="menu-item">
+              <a v-if="isGeneral" href="/bids.html" class="menu-item">
                 <span class="menu-text">입찰 내역 조회</span>
                 <span class="menu-arrow">›</span>
               </a>
@@ -146,6 +146,7 @@ const KAKAO_CLIENT_ID = '9134d431a52486f652c7c83e9156d009'
 // 사용자 정보
 const userName = ref('')
 const isSeller = ref(false)
+const isGeneral = ref(false)
 
 // 채팅 페이지 경로
 const chatPageUrl = '/chat.html'
@@ -175,10 +176,11 @@ onMounted(async () => {
     const payload = JSON.parse(atob(token.split('.')[1]))
     userName.value = payload.username || payload.userEmail || ''
 
-    // seller 역할 확인
     const role = (payload.userRole || '').toUpperCase()
     isSeller.value = role.includes('SELLER') || role.includes('ADMIN')
+    isGeneral.value = role.includes('GENERAL')
 
+    console.log(role)
     // 토큰 만료 확인
     const exp = payload.exp * 1000
     if (Date.now() >= exp) {
@@ -397,8 +399,9 @@ function logout() {
 /* 카드 컨테이너 */
 .cards-container {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
   gap: 24px;
+  justify-content: center;
 }
 
 /* 메인 카드 */

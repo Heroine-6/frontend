@@ -360,7 +360,7 @@ function formatDateOnly(v) {
 }
 
 /* ===== Links ===== */
-function goToBidHistory() { location.href = `/bids?auctionId=${data.value.auctionId}` }
+function goToBidHistory() { location.href = `/auction-detail?id=${data.value.auctionId}` }
 function goToBidPage() { location.href = `/payment-checkout.html?auctionId=${data.value.auctionId}` }
 </script>
 

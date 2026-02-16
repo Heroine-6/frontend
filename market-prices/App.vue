@@ -1,24 +1,5 @@
 <template>
-  <div class="page">
-    <!-- 헤더 -->
-    <header class="header">
-      <div class="header-inner">
-        <a href="/" class="logo">부동부동</a>
-        <nav class="header-nav">
-          <a href="/search.html" class="nav-link">매물 검색</a>
-          <a href="/market-prices.html" class="nav-link active">주변 시세</a>
-          <template v-if="isLoggedIn">
-            <a href="/mypage.html" class="btn-text">마이페이지</a>
-            <button class="btn-text" @click="logout">로그아웃</button>
-          </template>
-          <template v-else>
-            <a href="/signin.html" class="btn-text">로그인</a>
-            <a href="/signup.html" class="btn-header-primary">회원가입</a>
-          </template>
-        </nav>
-      </div>
-    </header>
-
+  <AppLayout>
     <!-- 메인 레이아웃: 지도 + 패널 -->
     <div class="main-layout">
       <!-- 지도 영역 -->
@@ -126,13 +107,14 @@
         </div>
       </aside>
     </div>
-  </div>
+  </AppLayout>
 </template>
 
 <script setup>
 import { ref, onMounted, watch, computed } from 'vue'
 import { getNearbyRealDeals, getSidoList, getGugunList, getDongList } from '../shared/api.js'
 import { debounce } from 'lodash-es'
+import AppLayout from "../components/AppLayout.vue";
 
 // ====== 상태 (State) ======
 const isLoggedIn = ref(false)

@@ -94,7 +94,7 @@
             v-model="searchKeyword"
             type="text"
             class="search-input"
-            placeholder="지역명, 건물명으로 검색"
+            placeholder="건물명으로 검색"
             @keyup.enter="doSearch"
           />
           <button class="search-btn" @click="doSearch">검색</button>

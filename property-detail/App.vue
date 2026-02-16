@@ -117,7 +117,7 @@
 
         <!-- 하단 액션 -->
         <div class="action-bar">
-          <button class="btn-back-outline" @click="goBack">목록으로</button>
+          <button class="btn-back-outline" @click="goBack">이전으로</button>
           <button v-if="userRole === 'GENERAL'" class="btn-inquiry" @click="goToChat">문의하기</button>
         </div>
       </section>

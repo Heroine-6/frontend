@@ -204,6 +204,12 @@
                   >
                     경매 등록
                   </button>
+                  <button
+                    class="btn-action btn-action-outline"
+                    @click="viewDetail(item)"
+                  >
+                    매물 상세보기
+                  </button>
                   <template v-if="item.auction">
                     <button
                       v-if="item.auction.status === 'SCHEDULED'"
@@ -211,12 +217,6 @@
                       @click="cancelAuction(item)"
                     >
                       경매 취소
-                    </button>
-                    <button
-                      class="btn-action btn-action-outline"
-                      @click="viewDetail(item)"
-                    >
-                      매물 상세보기
                     </button>
                     <button
                       class="btn-action btn-action-outline"

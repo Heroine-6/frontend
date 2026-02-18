@@ -287,7 +287,7 @@ const filters = ref({
 
 // ====== 필터링 ======
 const filteredProperties = computed(() => {
-  let list = [...properties.value]
+  let list = mergePropertyEntries(properties.value)
   const f = filters.value
 
   if (f.name) {
@@ -445,6 +445,56 @@ function viewDetail(item) {
 function viewAuctionDetail(auction) {
   const type = auction.type || 'ENGLISH'
   window.location.href = `/auction-detail.html?id=${auction.id}&type=${type}`
+}
+
+function mergePropertyEntries(items) {
+  const byId = new Map()
+
+  for (const item of items) {
+    const key = item?.id
+    if (!key) continue
+
+    const prev = byId.get(key)
+    if (!prev) {
+      byId.set(key, { ...item })
+      continue
+    }
+
+    const next = {
+      ...prev,
+      auction: pickPreferredAuction(prev.auction, item.auction)
+    }
+
+    // 기본 정보는 비어있지 않은 최신 값으로 보정
+    for (const k of ['name', 'address', 'thumbnailImage', 'type', 'builtYear', 'floor', 'supplyArea', 'privateArea']) {
+      if (!next[k] && item[k]) next[k] = item[k]
+    }
+
+    byId.set(key, next)
+  }
+
+  return Array.from(byId.values())
+}
+
+function pickPreferredAuction(a, b) {
+  const pa = auctionPriority(a?.status)
+  const pb = auctionPriority(b?.status)
+  if (pb > pa) return b
+
+  const ta = new Date(a?.startedAt || 0).getTime()
+  const tb = new Date(b?.startedAt || 0).getTime()
+  return tb > ta ? b : a
+}
+
+function auctionPriority(status) {
+  const map = {
+    OPEN: 5,
+    SCHEDULED: 4,
+    CLOSED: 3,
+    FAILED: 2,
+    CANCELLED: 1
+  }
+  return map[status] || 0
 }
 
 function goRegister() {
@@ -817,6 +867,8 @@ function logout() {
 .card-tags {
   display: flex;
   gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
 }
 .tag {
   padding: 4px 10px;

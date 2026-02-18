@@ -1,5 +1,6 @@
 <script setup>
 import { onMounted, ref } from 'vue'
+import { createDutchBid } from '../../shared/api.js'
 
 const status = ref('loading')
 const message = ref('승인 처리 중입니다...')
@@ -41,28 +42,38 @@ onMounted(async () => {
 
     const pending = localStorage.getItem('pendingBid')
     if (pending) {
-      const parsed = JSON.parse(pending)
 
-      setTimeout(() => {
-        window.location.href =
-            `/bid-register?auctionId=${parsed.auctionId}&type=${parsed.type}`
-      }, 1200)
+      const parsed = JSON.parse(pending)
+      localStorage.removeItem('pendingBid')
+
+      if (parsed.type === 'ENGLISH') {
+
+        setTimeout(() => {
+          window.location.href =
+              `/bid-register?auctionId=${parsed.auctionId}&type=ENGLISH&paid=true`
+        }, 1000)
+
+        return
+      }
+
+      if (parsed.type === 'DUTCH') {
+
+        await createDutchBid(parsed.auctionId)
+
+        setTimeout(() => {
+          window.location.href =
+              `/auction-detail.html?id=${parsed.auctionId}`
+        }, 1000)
+
+        return
+      }
     }
 
   } catch (e) {
     status.value = 'fail'
     message.value = '결제 승인 요청에 실패했습니다.'
   }
-
 })
-
-const goToPayments = () => {
-  window.location.href = '/payments.html'
-}
-
-const retry = () => {
-  window.location.reload()
-}
 </script>
 
 <template>

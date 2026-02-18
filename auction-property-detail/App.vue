@@ -338,7 +338,10 @@ function formatDateOnly(v) {
 
 /* ===== Links ===== */
 function goToBidHistory() { location.href = `/auction-detail?id=${data.value.auctionId}` }
-function goToBidPage() { location.href = `/payment-checkout.html?auctionId=${data.value.auctionId}` }
+function goToBidPage() {
+  const id = data.value?.auctionId || data.value?.id
+  location.href = `/bid-register?auctionId=${id}&type=DUTCH`
+}
 </script>
 
 <style scoped>

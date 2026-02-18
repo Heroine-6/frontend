@@ -101,15 +101,6 @@
             <span class="detail-label">시작가</span>
             <span class="detail-value">{{ detail.startPrice ? formatAmount(detail.startPrice) : '-' }}</span>
           </div>
-
-          <button
-            v-if="canRefund"
-            class="refund-btn"
-            :disabled="refunding"
-            @click="requestRefund"
-          >
-            {{ refunding ? '환불 요청 중...' : '환불 요청' }}
-          </button>
         </template>
       </div>
     </div>
@@ -547,29 +538,6 @@ function logout() {
 .detail-label { font-size: 13px; color: #6b7280; }
 .detail-value { font-size: 13px; font-weight: 700; color: #111827; text-align: right; }
 
-/* ===== 환불 버튼 ===== */
-.refund-btn {
-  width: 100%;
-  margin-top: 18px;
-  padding: 14px;
-  border: none;
-  border-radius: 12px;
-  background: #dc2626;
-  color: #fff;
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: background 0.2s, transform 0.1s;
-}
-.refund-btn:hover:not(:disabled) {
-  background: #b91c1c;
-  transform: translateY(-1px);
-}
-.refund-btn:disabled {
-  background: #d1d5db;
-  cursor: not-allowed;
-  transform: none;
-}
 
 /* ===== 토스트 ===== */
 .toast {

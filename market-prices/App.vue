@@ -193,6 +193,8 @@ function loadKakaoMap() {
 function initMap() {
   const options = { center: new kakao.maps.LatLng(37.5665, 126.978), level: 5 }
   map = new kakao.maps.Map(mapContainer.value, options)
+  // 컨테이너 크기가 확정된 후 지도 크기를 재계산하여 확대/이동 오작동 방지
+  kakao.maps.event.trigger(map, 'resize')
   geocoder = new kakao.maps.services.Geocoder()
   
   customOverlay = new kakao.maps.CustomOverlay({ map: null, yAnchor: 1.4 })
@@ -417,8 +419,8 @@ function formatPrice(price) {
 /* Main Layout */
 .main-layout {
   display: flex;
-  flex: 1;
-  min-height: 0;
+  height: calc(100vh - 60px); /* 헤더(60px) 제외한 나머지 영역 고정 */
+  overflow: hidden;
 }
 
 /* Map Area */

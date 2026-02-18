@@ -10,16 +10,29 @@
       <form @submit.prevent="handleSubmit">
         <div class="form-group">
           <label class="form-label" for="email">이메일</label>
-          <input
-            id="email"
-            v-model="form.email"
-            type="email"
-            class="form-input"
-            :class="{ error: errors.email }"
-            placeholder="example@email.com"
-            @blur="validate('email')"
-          />
+          <div class="input-row">
+            <input
+              id="email"
+              v-model="form.email"
+              type="email"
+              class="form-input"
+              :class="{ error: errors.email }"
+              placeholder="example@email.com"
+              :disabled="emailVerified"
+              @blur="validate('email')"
+              @input="onEmailChange"
+            />
+            <button
+              type="button"
+              class="btn-secondary"
+              :disabled="checkingEmail || emailVerified || !form.email"
+              @click="handleVerifyEmail"
+            >
+              {{ emailVerified ? '확인완료' : checkingEmail ? '확인중...' : '중복확인' }}
+            </button>
+          </div>
           <p v-if="errors.email" class="error-message">{{ errors.email }}</p>
+          <p v-if="emailVerified" class="success-hint">사용 가능한 이메일입니다.</p>
         </div>
 
         <div class="form-group">
@@ -50,56 +63,58 @@
           <p v-if="errors.password" class="error-message">{{ errors.password }}</p>
         </div>
 
-        <!-- 전화번호 + 인증 -->
-        <div class="form-group">
-          <label class="form-label" for="phone">전화번호</label>
-          <div class="input-row">
-            <input
-              id="phone"
-              v-model="form.phone"
-              type="tel"
-              class="form-input"
-              :class="{ error: errors.phone }"
-              placeholder="01012345678"
-              :disabled="phoneVerified"
-              @blur="validate('phone')"
-            />
-            <button
-              type="button"
-              class="btn-secondary"
-              :disabled="sendingCode || phoneVerified || !form.phone"
-              @click="handleSendCode"
-            >
-              {{ phoneVerified ? '인증완료' : sendingCode ? '전송중...' : codeSent ? '재전송' : '인증요청' }}
-            </button>
+        <!-- 전화번호 + 인증 (이메일 중복확인 후 표시) -->
+        <template v-if="emailVerified">
+          <div class="form-group">
+            <label class="form-label" for="phone">전화번호</label>
+            <div class="input-row">
+              <input
+                id="phone"
+                v-model="form.phone"
+                type="tel"
+                class="form-input"
+                :class="{ error: errors.phone }"
+                placeholder="01012345678"
+                :disabled="phoneVerified"
+                @blur="validate('phone')"
+              />
+              <button
+                type="button"
+                class="btn-secondary"
+                :disabled="sendingCode || phoneVerified || !form.phone"
+                @click="handleSendCode"
+              >
+                {{ phoneVerified ? '인증완료' : sendingCode ? '전송중...' : codeSent ? '재전송' : '인증요청' }}
+              </button>
+            </div>
+            <p v-if="errors.phone" class="error-message">{{ errors.phone }}</p>
           </div>
-          <p v-if="errors.phone" class="error-message">{{ errors.phone }}</p>
-        </div>
 
-        <div v-if="codeSent && !phoneVerified" class="form-group">
-          <label class="form-label" for="verifyCode">인증번호</label>
-          <div class="input-row">
-            <input
-              id="verifyCode"
-              v-model="verifyCode"
-              type="text"
-              class="form-input"
-              :class="{ error: errors.verifyCode }"
-              placeholder="인증번호 입력"
-              maxlength="6"
-            />
-            <button
-              type="button"
-              class="btn-secondary"
-              :disabled="verifying || !verifyCode"
-              @click="handleVerifyCode"
-            >
-              {{ verifying ? '확인중...' : '확인' }}
-            </button>
+          <div v-if="codeSent && !phoneVerified" class="form-group">
+            <label class="form-label" for="verifyCode">인증번호</label>
+            <div class="input-row">
+              <input
+                id="verifyCode"
+                v-model="verifyCode"
+                type="text"
+                class="form-input"
+                :class="{ error: errors.verifyCode }"
+                placeholder="인증번호 입력"
+                maxlength="6"
+              />
+              <button
+                type="button"
+                class="btn-secondary"
+                :disabled="verifying || !verifyCode"
+                @click="handleVerifyCode"
+              >
+                {{ verifying ? '확인중...' : '확인' }}
+              </button>
+            </div>
+            <p v-if="errors.verifyCode" class="error-message">{{ errors.verifyCode }}</p>
+            <p v-if="countdown > 0" class="hint-message">남은 시간: {{ formatCountdown }}</p>
           </div>
-          <p v-if="errors.verifyCode" class="error-message">{{ errors.verifyCode }}</p>
-          <p v-if="countdown > 0" class="hint-message">남은 시간: {{ formatCountdown }}</p>
-        </div>
+        </template>
 
         <div class="form-group">
           <label class="form-label" for="address">주소</label>
@@ -150,7 +165,7 @@
 
 <script setup>
 import { reactive, ref, computed, onUnmounted } from 'vue'
-import { authSignUp, smsSend, smsVerify } from '../shared/api.js'
+import { authSignUp, verifyEmail, smsSend, smsVerify } from '../shared/api.js'
 import {
   validateEmail,
   validatePassword,
@@ -182,6 +197,10 @@ const errors = reactive({
 const loading = ref(false)
 const successMsg = ref('')
 const errorMsg = ref('')
+
+// 이메일 중복확인 상태
+const emailVerified = ref(false)
+const checkingEmail = ref(false)
 
 // SMS 인증 상태
 const verifyCode = ref('')
@@ -227,6 +246,35 @@ function validate(field) {
 function validateAll() {
   Object.keys(validators).forEach(validate)
   return Object.values(errors).every((e) => !e)
+}
+
+function onEmailChange() {
+  if (emailVerified.value) {
+    emailVerified.value = false
+    // 이메일 변경 시 전화번호 인증도 초기화
+    phoneVerified.value = false
+    codeSent.value = false
+    verifyCode.value = ''
+    clearInterval(countdownTimer)
+    countdown.value = 0
+  }
+}
+
+async function handleVerifyEmail() {
+  errors.email = ''
+  errorMsg.value = ''
+  validate('email')
+  if (errors.email) return
+
+  checkingEmail.value = true
+  try {
+    await verifyEmail(form.email)
+    emailVerified.value = true
+  } catch (e) {
+    errors.email = e.message || '이미 사용 중인 이메일입니다.'
+  } finally {
+    checkingEmail.value = false
+  }
 }
 
 async function handleSendCode() {
@@ -392,6 +440,13 @@ function handleKakaoSignUp() {
 
 .hint-message {
   color: #6c757d;
+  font-size: 13px;
+  margin-top: 6px;
+  text-align: left;
+}
+
+.success-hint {
+  color: #28a745;
   font-size: 13px;
   margin-top: 6px;
   text-align: left;

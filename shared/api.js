@@ -62,6 +62,13 @@ export function authSignIn({ email, password }) {
   })
 }
 
+export function verifyEmail(email) {
+  return request('/api/auth/v1/verify-email', {
+    method: 'POST',
+    body: { email }
+  })
+}
+
 export function authSignUp({ email, name, password, phone, address, role }) {
   return request('/api/auth/v1/signup', {
     method: 'POST',

@@ -146,7 +146,7 @@
 
             <!-- 하향식: 즉시낙찰 -->
             <button
-                v-if="data.auctionType === 'DUTCH' && data.status === 'OPEN'"
+                v-if="isLoggedIn && data.auctionType === 'DUTCH' && data.status === 'OPEN'"
                 class="btn-primary"
                 @click="goToBidPage"
             >

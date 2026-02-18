@@ -205,7 +205,8 @@ import {
   createBid,
   createDutchBid,
   compareWithMarket,
-  createDepositPayment
+  createDepositPayment,
+  createPayment
 } from '../shared/api.js'
 import AppLayout from "../components/AppLayout.vue";
 
@@ -265,37 +266,41 @@ onMounted(async () => {
 
   await fetchData()
 
-  // 🔥 결제 후 자동 입찰 재시도
+  // ===== 보증금 결제 후 자동 입찰 처리 =====
   const pending = localStorage.getItem('pendingBid')
+
   if (pending) {
     const parsed = JSON.parse(pending)
 
-    if (parsed.auctionId === auctionId.value) {
+    if (String(parsed.auctionId) === String(auctionId.value)) {
+
       localStorage.removeItem('pendingBid')
 
-      // 약간의 UX 안정성을 위해 약간 지연
       setTimeout(async () => {
         try {
           submitting.value = true
 
           if (parsed.type === 'ENGLISH') {
             await createBid(parsed.auctionId, { price: parsed.price })
-          } else {
+
+          } else if (parsed.type === 'DUTCH') {
             await createDutchBid(parsed.auctionId)
           }
 
           alert('보증금 결제 후 자동으로 입찰이 완료되었습니다!')
-          window.location.href = `/auction-detail?id=${parsed.auctionId}`
+          window.location.href =
+              `/auction-detail.html?id=${parsed.auctionId}`
 
         } catch (e) {
           console.error('자동 입찰 실패:', e)
         } finally {
           submitting.value = false
         }
-      }, 500)
+      }, 400)
     }
   }
 })
+
 
 
 onUnmounted(() => {
@@ -369,20 +374,51 @@ async function submitBid() {
 
     if (auctionType.value === 'ENGLISH') {
       await createBid(auctionId.value, { price: bidPrice.value })
-    } else {
-      await createDutchBid(auctionId.value)
-    }
 
-    alert('입찰이 완료되었습니다!')
-    window.location.href = `/auction-detail.html?id=${auctionId.value}`
+      alert('입찰이 완료되었습니다!')
+      window.location.href =
+          `/auction-detail.html?id=${auctionId.value}`
+      return
+    }
+    localStorage.setItem('pendingBid', JSON.stringify({
+      auctionId: auctionId.value,
+      type: 'DUTCH'
+    }))
+
+    const res = await createPayment(auctionId.value, 'DEPOSIT')
+
+    const { orderId, orderName, amount } = res.data
+
+    const tossPayments = window.TossPayments(
+        import.meta.env.VITE_TOSS_CLIENT_KEY
+    )
+
+    await tossPayments.requestPayment('CARD', {
+      amount,
+      orderId,
+      orderName,
+      successUrl: window.location.origin + '/payment-success.html',
+      failUrl: window.location.origin + '/payment-fail.html'
+    })
 
   } catch (e) {
     if (e.message === '보증금 결제가 먼저 필요합니다') {
+
+      localStorage.setItem('pendingBid', JSON.stringify({
+        auctionId: auctionId.value,
+        type: 'ENGLISH',
+        price: bidPrice.value
+      }))
+
       showDepositModal.value = true
       return
     }
+
+  } finally {
+    submitting.value = false
   }
 }
+
 
 async function proceedDepositPayment() {
 

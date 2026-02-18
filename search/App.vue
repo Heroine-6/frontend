@@ -374,8 +374,6 @@ function buildParams() {
     params.set('sort', 'price,asc')
   } else if (sortOption.value === 'priceDesc') {
     params.set('sort', 'price,desc')
-  } else {
-    params.set('sort', 'createdAt,desc')
   }
 
   params.set('page', String(page.value))

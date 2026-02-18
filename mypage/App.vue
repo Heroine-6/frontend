@@ -126,7 +126,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { getMyNotifications, linkKakao } from '../shared/api.js'
+import { getMyNotifications, linkKakao, getMyProfile } from '../shared/api.js'
 import AppLayout from '../components/AppLayout.vue'
 
 const KAKAO_CLIENT_ID = '9134d431a52486f652c7c83e9156d009'
@@ -161,14 +161,9 @@ onMounted(async () => {
 
   // JWT 디코딩
   try {
-    const payload = JSON.parse(atob(token.split('.')[1]))
+    const payload = decodeJwtPayload(token)
     userName.value = payload.username || payload.userEmail || ''
-
-    const role = (payload.userRole || '').toUpperCase()
-    isSeller.value = role.includes('SELLER') || role.includes('ADMIN')
-    isGeneral.value = role.includes('GENERAL')
-
-    console.log(role)
+    applyRoleFlags(extractRoles(payload))
     // 토큰 만료 확인
     const exp = payload.exp * 1000
     if (Date.now() >= exp) {
@@ -182,6 +177,19 @@ onMounted(async () => {
     console.error('토큰 파싱 실패:', e)
   }
 
+  // 서버 프로필 기준으로 역할 보정
+  try {
+    const me = await getMyProfile()
+    const profile = me?.data || {}
+    const roles = extractRoles(profile)
+    if (roles.length) applyRoleFlags(roles)
+    if (!userName.value) {
+      userName.value = profile.name || profile.username || profile.userEmail || ''
+    }
+  } catch {
+    /* ignore */
+  }
+
   // URL에 code 파라미터가 있으면 카카오 연동 처리
   const urlParams = new URLSearchParams(window.location.search)
   const code = urlParams.get('code')
@@ -192,6 +200,29 @@ onMounted(async () => {
   // 알림 내역 불러오기
   await loadNotifications()
 })
+
+function decodeJwtPayload(token) {
+  const raw = token.startsWith('Bearer ') ? token.slice(7) : token
+  const base64 = raw.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')
+  const bytes = Uint8Array.from(atob(base64), c => c.charCodeAt(0))
+  return JSON.parse(new TextDecoder().decode(bytes))
+}
+
+function extractRoles(obj) {
+  const direct = [obj?.userRole, obj?.role, obj?.userType].filter(Boolean)
+  const roles = Array.isArray(obj?.roles) ? obj.roles : []
+  const authorities = Array.isArray(obj?.authorities) ? obj.authorities : []
+  return [...direct, ...roles, ...authorities]
+    .map((v) => (typeof v === 'string' ? v : v?.authority || v?.role || ''))
+    .filter(Boolean)
+    .map((v) => v.toUpperCase())
+}
+
+function applyRoleFlags(roleList) {
+  const joined = roleList.join(',')
+  isSeller.value = joined.includes('SELLER') || joined.includes('ADMIN')
+  isGeneral.value = joined.includes('GENERAL') || joined.includes('USER')
+}
 
 // 알림 내역 불러오기
 async function loadNotifications() {

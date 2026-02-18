@@ -37,7 +37,7 @@
 
           <!-- 입찰 카드 -->
           <div class="main-card">
-            <h2 class="card-title">입찰</h2>
+            <h2 class="card-title">{{ isSeller && !isGeneral ? '매물 관리' : '입찰' }}</h2>
             <div class="card-content">
               <a v-if="isGeneral" href="/bids.html" class="menu-item">
                 <span class="menu-text">입찰 내역 조회</span>

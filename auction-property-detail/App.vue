@@ -196,6 +196,11 @@ onMounted(async () => {
     const res = await fetch(`/api/properties/v1/${id}/auction`)
     const json = await res.json()
     data.value = json.data
+
+    if (!data.value || data.value.status !== 'OPEN') {
+      location.replace(`/property-detail?id=${id}`)
+      return
+    }
   } catch (e) {
     console.error(e)
   } finally {
@@ -307,11 +312,12 @@ const propertyTypeLabel = computed(() => {
 const badgeClass = computed(() => ({
   open: data.value?.status === 'OPEN',
   scheduled: data.value?.status === 'SCHEDULED',
-  closed: data.value?.status === 'CLOSED'
+  closed: data.value?.status === 'CLOSED',
+  cancelled: data.value?.status === 'CANCELLED' || data.value?.status === 'FAILED'
 }))
 
 const statusLabel = computed(() => {
-  const m = { OPEN: '진행중', SCHEDULED: '경매 예정', CLOSED: '종료' }
+  const m = { OPEN: '진행중', SCHEDULED: '경매 예정', CLOSED: '종료', CANCELLED: '취소', FAILED: '유찰' }
   return m[data.value?.status] || data.value?.status || '-'
 })
 
@@ -511,6 +517,7 @@ function goToBidPage() {
 .status.open { background:#d4f5e9; color:#0f9d58; }
 .status.scheduled { background:#e3e8f0; color:#334155; }
 .status.closed { background:#fddede; color:#d93025; }
+.status.cancelled { background:#f1f5f9; color:#64748b; }
 
 /* 글자 붙는 문제 해결 핵심 */
 .auction-grid{

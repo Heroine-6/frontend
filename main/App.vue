@@ -59,6 +59,19 @@
 
     <!-- 히어로 -->
     <section class="hero">
+      <div
+        class="hero-track"
+        :class="{ 'no-transition': noTransition }"
+        :style="{ transform: `translateX(-${currentSlide * 100}%)` }"
+      >
+        <div
+          v-for="(img, idx) in slideImages"
+          :key="idx"
+          class="hero-slide"
+          :style="{ backgroundImage: `url(${img})` }"
+        ></div>
+      </div>
+      <div class="hero-overlay"></div>
       <div class="hero-inner">
         <h1 class="hero-title">믿을 수 있는 부동산 경매</h1>
         <p class="hero-desc">원하는 매물을 검색하고, 경매에 참여하세요</p>
@@ -177,8 +190,15 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import AppLayout from "../components/AppLayout.vue";
+
+// 히어로 슬라이드
+const heroImages = ['/hero-bg-1.avif', '/hero-bg-2.jpeg', '/20240815_2_56702.jpg', '/66e28e260292d2738250.jpg']
+const slideImages = [...heroImages, heroImages[0]] // 끝에 첫 장 복제
+const currentSlide = ref(0)
+const noTransition = ref(false)
+let slideTimer = null
 
 const propertyTypes = [
   { label: '전체', value: '' },
@@ -208,6 +228,26 @@ const userName = ref('')
 onMounted(() => {
   checkAuth()
   fetchProperties()
+  slideTimer = setInterval(() => {
+    currentSlide.value++
+    // 복제본(마지막)에 도달하면 transition 끝난 후 즉시 0으로 리셋
+    if (currentSlide.value === heroImages.length) {
+      setTimeout(() => {
+        noTransition.value = true
+        currentSlide.value = 0
+        // 리플로우 후 transition 복원
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            noTransition.value = false
+          })
+        })
+      }, 1000) // transition 시간과 동일
+    }
+  }, 3000)
+})
+
+onUnmounted(() => {
+  clearInterval(slideTimer)
 })
 
 function decodeJwtPayload(token) {
@@ -588,10 +628,38 @@ function getDetailLink(item) {
 
 /* ---------- 히어로 ---------- */
 .hero {
-  background: linear-gradient(135deg, #3182f6 0%, #1b64da 100%);
+  position: relative;
   padding: 64px 24px;
+  overflow: hidden;
+}
+.hero-track {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: flex;
+  width: 100%;
+  height: 100%;
+  transition: transform 1s ease-in-out;
+}
+.hero-track.no-transition {
+  transition: none;
+}
+.hero-slide {
+  flex: 0 0 100%;
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+}
+.hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(17, 24, 39, 0.55);
+  z-index: 1;
 }
 .hero-inner {
+  position: relative;
+  z-index: 2;
   max-width: 640px;
   margin: 0 auto;
   text-align: center;

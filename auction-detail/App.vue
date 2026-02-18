@@ -34,8 +34,8 @@
               <h3 class="section-title-compact">매물 정보</h3>
               <div class="dutch-property-image">
                 <img
-                  v-if="propertyInfo?.thumbnailImage"
-                  :src="propertyInfo.thumbnailImage"
+                  v-if="propertyImage"
+                  :src="propertyImage"
                   :alt="propertyInfo.name"
                   class="dutch-thumb-img"
                 />
@@ -161,8 +161,8 @@
               <h3 class="section-title-compact">매물 정보</h3>
               <div class="dutch-property-image">
                 <img
-                  v-if="propertyInfo?.thumbnailImage"
-                  :src="propertyInfo.thumbnailImage"
+                  v-if="propertyImage"
+                  :src="propertyImage"
                   :alt="propertyInfo.name"
                   class="dutch-thumb-img"
                 />
@@ -262,6 +262,12 @@ const timeRemaining = ref({ days: 0, hours: 0, minutes: 0, seconds: 0 })
 const timeUntilStart = ref({ days: 0, hours: 0, minutes: 0, seconds: 0 })
 const isTimeUrgent = ref(false)
 let countdownInterval = null
+
+// 매물 이미지 (thumbnailImage 또는 images 배열 첫 번째)
+const propertyImage = computed(() => {
+  if (!propertyInfo.value) return null
+  return propertyInfo.value.thumbnailImage || propertyInfo.value.images?.[0] || null
+})
 
 // 하향 경매: 현재 가격 (API에서 currentPrice 제공)
 const currentPrice = computed(() => {

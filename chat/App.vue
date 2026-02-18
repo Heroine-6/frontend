@@ -616,12 +616,11 @@ function logout() {
 
 /* 채팅 레이아웃 */
 .chat-layout {
-  flex: 1;
   display: flex;
+  height: calc(100vh - 60px); /* 헤더(60px) 제외한 나머지 영역 고정 */
   max-width: 1400px;
   width: 100%;
   margin: 0 auto;
-  min-height: 0;
   overflow: hidden;
 }
 
@@ -925,7 +924,7 @@ function logout() {
 @media (max-width: 768px) {
   .chat-layout {
     flex-direction: column;
-    height: calc(100vh - 65px);
+    height: calc(100vh - 60px);
   }
 
   .chat-sidebar {

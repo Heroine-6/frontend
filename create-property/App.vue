@@ -371,21 +371,41 @@ async function lookupProperty() {
   lookingUp.value = true
   try {
     const token = localStorage.getItem('accessToken')
-    const res = await fetch('/api/properties/v1/lookup', {
+    const rawToken = token ? token.replace(/^Bearer\s+/i, '') : ''
+    const bearerToken = rawToken ? `Bearer ${rawToken}` : ''
+
+    const requestBody = {
+      type: selectedType.value,
+      address: form.value.address.trim(),
+      dealYmd: form.value.dealYmd.trim(),
+      floor: parseInt(form.value.floor),
+    }
+
+    const runLookup = (authHeader) => fetch('/api/properties/v1/lookup', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        ...(token ? { 'Authorization': token } : {}),
+        ...(authHeader ? { 'Authorization': authHeader } : {}),
       },
-      body: JSON.stringify({
-        type: selectedType.value,
-        address: form.value.address.trim(),
-        dealYmd: form.value.dealYmd.trim(),
-        floor: parseInt(form.value.floor),
-      }),
+      body: JSON.stringify(requestBody),
     })
 
-    const json = await res.json()
+    let res = await runLookup(bearerToken || token)
+    if (res.status === 401 && rawToken && (bearerToken || token) !== rawToken) {
+      res = await runLookup(rawToken)
+    }
+
+    const text = await res.text()
+    let json = null
+    try {
+      json = text ? JSON.parse(text) : null
+    } catch {
+      json = null
+    }
+    if (!json) {
+      errorMsg.value = `매물 조회 응답이 비어 있습니다. (${res.status})`
+      return
+    }
     if (!json.success) {
       errorMsg.value = json.message || '매물 조회에 실패했습니다.'
       return

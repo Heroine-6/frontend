@@ -370,12 +370,10 @@ async function lookupProperty() {
 
   lookingUp.value = true
   try {
-    const token = localStorage.getItem('accessToken')
     const res = await fetch('/api/properties/v1/lookup', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        ...(token ? { 'Authorization': token } : {}),
       },
       body: JSON.stringify({
         type: selectedType.value,

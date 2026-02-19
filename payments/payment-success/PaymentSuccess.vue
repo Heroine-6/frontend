@@ -7,6 +7,7 @@ const message = ref('승인 처리 중입니다...')
 const orderId = ref('')
 const amount = ref('')
 const paymentKey = ref('')
+const hasPendingBid = ref(false)
 
 onMounted(async () => {
   const params = new URLSearchParams(window.location.search)
@@ -26,7 +27,7 @@ onMounted(async () => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `${localStorage.getItem('accessToken')}`
+        Authorization: localStorage.getItem('accessToken')
       },
       body: JSON.stringify({
         paymentKey: paymentKey.value,
@@ -40,31 +41,28 @@ onMounted(async () => {
     status.value = 'success'
     message.value = '결제가 완료되었습니다.'
 
+    // pendingBid 존재 여부 안전하게 체크
     const pending = localStorage.getItem('pendingBid')
-    if (pending) {
+    hasPendingBid.value = !!pending
 
+    if (pending) {
       const parsed = JSON.parse(pending)
       localStorage.removeItem('pendingBid')
 
       if (parsed.type === 'ENGLISH') {
-
         setTimeout(() => {
           window.location.href =
               `/bid-register?auctionId=${parsed.auctionId}&type=ENGLISH&paid=true`
         }, 1000)
-
         return
       }
 
       if (parsed.type === 'DUTCH') {
-
         await createDutchBid(parsed.auctionId)
-
         setTimeout(() => {
           window.location.href =
               `/auction-detail.html?id=${parsed.auctionId}`
         }, 1000)
-
         return
       }
     }
@@ -74,7 +72,16 @@ onMounted(async () => {
     message.value = '결제 승인 요청에 실패했습니다.'
   }
 })
+
+function goToPayments() {
+  window.location.href = '/payments'
+}
+
+function retry() {
+  window.history.back()
+}
 </script>
+
 
 <template>
   <div class="page">
@@ -104,7 +111,7 @@ onMounted(async () => {
       </div>
 
       <div class="actions">
-        <button v-if="status === 'success'&& !localStorage.getItem('pendingBid')" class="btn primary" @click="goToPayments">
+        <button v-if="status === 'success' && !hasPendingBid" class="btn primary" @click="goToPayments">
           결제 내역 보기
         </button>
 

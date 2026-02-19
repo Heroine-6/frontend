@@ -295,7 +295,7 @@ async function fetchProperties() {
     const json = await res.json()
     if (json.success && json.data) {
       const items = json.data.content || []
-      properties.value = items.filter(isVisibleOnMain)
+      properties.value = dedupeMainItems(items.map(normalizeMainItem))
       hasNext.value = json.data.hasNext || false
     }
   } catch {
@@ -315,8 +315,8 @@ async function loadMore() {
     const res = await fetch(`${endpoint}?${params}`)
     const json = await res.json()
     if (json.success && json.data) {
-      const items = (json.data.content || []).filter(isVisibleOnMain)
-      properties.value.push(...items)
+      const items = (json.data.content || []).map(normalizeMainItem)
+      properties.value = dedupeMainItems([...properties.value, ...items])
       hasNext.value = json.data.hasNext || false
     }
   } catch {
@@ -368,8 +368,37 @@ function badgeClass(status) {
   }
 }
 
-function isVisibleOnMain(item) {
-  return item?.auction?.status !== 'CANCELLED'
+function normalizeMainItem(item) {
+  if (!item?.auction) return item
+  if (item.auction.status !== 'CANCELLED') return item
+  return {
+    ...item,
+    auction: null
+  }
+}
+
+function dedupeMainItems(items) {
+  const byId = new Map()
+  for (const item of items) {
+    const key = item?.id
+    if (!key) continue
+    const prev = byId.get(key)
+    if (!prev || auctionPriority(item?.auction?.status) > auctionPriority(prev?.auction?.status)) {
+      byId.set(key, item)
+    }
+  }
+  return Array.from(byId.values())
+}
+
+function auctionPriority(status) {
+  const map = {
+    OPEN: 5,
+    SCHEDULED: 4,
+    CLOSED: 3,
+    FAILED: 2,
+    CANCELLED: 1,
+  }
+  return map[status] || 0
 }
 
 function formatPrice(price) {

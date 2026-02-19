@@ -111,15 +111,17 @@ function bidStatusLabel(status) {
     OUTBID: '입찰 실패',
     PENDING: '대기중',
     ACCEPTED: '낙찰',
-    REJECTED: '유찰'
+    REJECTED: '유찰',
+    WON: '낙찰',
+    LOST: '낙찰 실패'
   }
   return labels[status] || status
 }
 
 function bidStatusClass(status) {
   return {
-    'badge-success': status === 'WINNING' || status === 'ACCEPTED',
-    'badge-error': status === 'OUTBID' || status === 'REJECTED',
+    'badge-success': status === 'WINNING' || status === 'ACCEPTED' || status === 'WON',
+    'badge-error': status === 'OUTBID' || status === 'REJECTED' || status === 'LOST',
     'badge-warning': status === 'PENDING'
   }
 }

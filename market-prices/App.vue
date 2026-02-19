@@ -24,6 +24,10 @@
               <input type="checkbox" id="showRadius" v-model="showRadius" />
               <label for="showRadius">반경 표시</label>
             </div>
+            <div class="radius-toggle">
+              <input type="checkbox" id="onlyInRadius" v-model="onlyInRadius" />
+              <label for="onlyInRadius">반경 내만 보기</label>
+            </div>
           </div>
           <!-- 지도 위 필터 칩 -->
           <div class="map-filters">
@@ -81,7 +85,7 @@
         <!-- 목록 화면 -->
         <div v-else class="list-view">
           <div class="list-header">
-            <h3>주변 실거래가 <span v-if="properties.length > 0">({{ properties.length }}건)</span></h3>
+            <h3>주변 실거래가 <span v-if="sortedProperties.length > 0">({{ sortedProperties.length }}건)</span></h3>
             <!-- 정렬 탭 추가 -->
             <div class="sort-tabs">
               <button class="sort-tab" :class="{ active: sortBy === 'distance' }" @click="sortBy = 'distance'">거리순</button>
@@ -90,7 +94,7 @@
           </div>
           <div class="property-list">
             <div v-if="loading" class="state-box">데이터를 불러오는 중...</div>
-            <div v-else-if="properties.length === 0" class="state-box">
+            <div v-else-if="sortedProperties.length === 0" class="state-box">
               <p>주변에 거래 내역이 없거나<br/>지도를 움직여 검색해보세요.</p>
             </div>
             <!-- sortedProperties 사용 -->
@@ -129,6 +133,8 @@ const selectedSido = ref(''), selectedGugun = ref(''), selectedDong = ref('')
 const radiusSliderValue = ref(10) // 슬라이더의 정수 값 (1-10, 10 = 1.0km)
 const radiusKm = computed(() => radiusSliderValue.value / 10) // 실제 반경 (km)
 const showRadius = ref(true)
+const onlyInRadius = ref(false)
+const apiDistanceKm = 5
 const filters = ref({ type: '' })
 const properties = ref([])
 const selectedProperty = ref(null)
@@ -142,10 +148,20 @@ const propertyTypes = [
   { label: '빌라', value: 'VILLA' },
 ]
 
+const visibleProperties = computed(() => {
+  const center = map ? map.getCenter() : null
+  if (!onlyInRadius.value || !center) return properties.value
+
+  return properties.value.filter(item => {
+    const distance = getDistanceInKm(center.getLat(), center.getLng(), item.lat, item.lng)
+    return Number.isFinite(distance) && distance <= radiusKm.value
+  })
+})
+
 // ====== 정렬된 목록 (Computed) ======
 const sortedProperties = computed(() => {
   const center = map ? map.getCenter() : null
-  const propertiesToSort = [...properties.value]
+  const propertiesToSort = [...visibleProperties.value]
 
   if (sortBy.value === 'distance') {
     if (!center) return propertiesToSort
@@ -259,7 +275,7 @@ const fetchNearbyDeals = async () => {
     const center = map.getCenter()
     const params = {
       lat: center.getLat(), lon: center.getLng(),
-      distanceKm: radiusKm.value, size: 100,
+      distanceKm: apiDistanceKm, size: 100,
     }
     if (filters.value.type) params.propertyType = filters.value.type
 
@@ -279,6 +295,13 @@ const fetchNearbyDeals = async () => {
 const debouncedFetch = debounce(fetchNearbyDeals, 500)
 watch(() => filters.value.type, fetchNearbyDeals)
 watch(showRadius, updateCircleVisibility)
+watch(onlyInRadius, () => {
+  selectedProperty.value = null
+  updateMarkers()
+})
+watch(radiusKm, () => {
+  if (onlyInRadius.value) updateMarkers()
+})
 watch(sortBy, () => { /* sortedProperties computed property가 자동으로 재정렬 */ })
 
 
@@ -287,7 +310,7 @@ function updateMarkers() {
   markers.forEach(m => m.setMap(null))
   markers = []
   customOverlay.setMap(null)
-  properties.value.forEach(item => {
+  visibleProperties.value.forEach(item => {
     if (!item.lat || !item.lng) return
     const position = new kakao.maps.LatLng(item.lat, item.lng)
     const marker = new kakao.maps.Marker({ position })
@@ -331,7 +354,7 @@ function showDetails(item) {
 
 // ====== 유틸리티 함수 ======\
 function getDistanceInKm(lat1, lon1, lat2, lon2) {
-    if (!lat1 || !lon1 || !lat2 || !lon2) return Infinity;
+    if ([lat1, lon1, lat2, lon2].some(v => v == null)) return Infinity;
     const R = 6371; // Radius of the earth in km
     const dLat = (lat2-lat1) * (Math.PI/180);
     const dLon = (lon2-lon1) * (Math.PI/180); 

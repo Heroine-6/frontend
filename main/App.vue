@@ -1,27 +1,77 @@
 <template>
-  <div class="page">
-    <!-- 헤더 -->
-    <header class="header">
-      <div class="header-inner">
-        <a href="/" class="logo">부동부동</a>
-        <nav class="header-nav">
-          <a href="/search" class="btn-text">매물 검색</a>
-          <a href="/market-prices" class="btn-text">주변 시세</a>
-          <template v-if="isLoggedIn">
-            <a href="/mypage" class="btn-text">마이페이지</a>
-            <span class="user-greeting">{{ userName }}님</span>
-            <button class="btn-text" @click="logout">로그아웃</button>
-          </template>
-          <template v-else>
-            <a href="/signin" class="btn-text">로그인</a>
-            <a href="/signup" class="btn-header-primary">회원가입</a>
-          </template>
+  <AppLayout>
+    <div class="page">
+      <!-- Overlay -->
+      <div v-if="sidebarOpen" class="overlay" @click="closeSidebar"></div>
+
+      <!-- Sidebar -->
+      <aside class="sidebar" :class="{ open: sidebarOpen }">
+        <div class="sidebar-header">
+          <span class="sidebar-title">메뉴</span>
+          <button class="close-btn" @click="closeSidebar">✕</button>
+        </div>
+
+        <!-- 상단 메뉴 -->
+        <nav class="sidebar-nav">
+          <a href="/search" @click="closeSidebar" class="sidebar-link">
+            <span class="icon">🔍</span>
+            매물 검색
+          </a>
+
+          <a href="/market-prices" @click="closeSidebar" class="sidebar-link">
+            <span class="icon">📊</span>
+            주변 시세
+          </a>
+
+          <a v-if="isLoggedIn" href="/mypage" @click="closeSidebar" class="sidebar-link">
+            <span class="icon">👤</span>
+            마이페이지
+          </a>
         </nav>
-      </div>
-    </header>
+
+        <div class="sidebar-divider"></div>
+
+        <!-- 하단 사용자 영역 -->
+        <div class="sidebar-user-area">
+          <div v-if="isLoggedIn" class="sidebar-user">
+            🙋 {{ userName }}님
+          </div>
+
+          <button
+              v-if="isLoggedIn"
+              class="sidebar-logout"
+              @click="logout"
+          >
+            🚪 로그아웃
+          </button>
+
+          <template v-else>
+            <div class="sidebar-auth">
+              <a href="/signin" class="sidebar-link">🔑 로그인</a>
+              <a href="/signup" class="sidebar-link">✨ 회원가입</a>
+            </div>
+          </template>
+        </div>
+      </aside>
+
+
+    </div>
 
     <!-- 히어로 -->
     <section class="hero">
+      <div
+        class="hero-track"
+        :class="{ 'no-transition': noTransition }"
+        :style="{ transform: `translateX(-${currentSlide * 100}%)` }"
+      >
+        <div
+          v-for="(img, idx) in slideImages"
+          :key="idx"
+          class="hero-slide"
+          :style="{ backgroundImage: `url(${img})` }"
+        ></div>
+      </div>
+      <div class="hero-overlay"></div>
       <div class="hero-inner">
         <h1 class="hero-title">믿을 수 있는 부동산 경매</h1>
         <p class="hero-desc">원하는 매물을 검색하고, 경매에 참여하세요</p>
@@ -30,7 +80,7 @@
             v-model="searchKeyword"
             type="text"
             class="search-input"
-            placeholder="지역명, 단지명으로 검색"
+            placeholder="건물명으로 검색"
             @keyup.enter="doSearch"
           />
           <button class="search-btn" @click="doSearch">검색</button>
@@ -82,10 +132,10 @@
         </div>
         <div v-else class="property-grid">
           <a
-            v-for="item in properties"
-            :key="item.id"
-            :href="'/api/v1/properties/' + item.id"
-            class="property-card"
+              v-for="item in properties"
+              :key="item.id"
+              :href="getDetailLink(item)"
+              class="property-card"
           >
             <div class="card-thumb">
               <img
@@ -110,6 +160,13 @@
               <div v-if="item.auction" class="card-price">
                 {{ formatPrice(item.auction.startPrice) }}
               </div>
+              <button
+                v-if="item.auction?.status === 'OPEN'"
+                class="btn-auction"
+                @click.prevent.stop="goToAuction(item.auction.id)"
+              >
+                경매 진행 정보
+              </button>
             </div>
           </a>
         </div>
@@ -129,11 +186,19 @@
         <p>&copy; 2025 부동부동. 부동산 경매 플랫폼</p>
       </div>
     </footer>
-  </div>
+  </AppLayout>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
+import AppLayout from "../components/AppLayout.vue";
+
+// 히어로 슬라이드
+const heroImages = ['/hero-bg-1.avif', '/hero-bg-2.jpeg', '/20240815_2_56702.jpg', '/66e28e260292d2738250.jpg']
+const slideImages = [...heroImages, heroImages[0]] // 끝에 첫 장 복제
+const currentSlide = ref(0)
+const noTransition = ref(false)
+let slideTimer = null
 
 const propertyTypes = [
   { label: '전체', value: '' },
@@ -163,6 +228,26 @@ const userName = ref('')
 onMounted(() => {
   checkAuth()
   fetchProperties()
+  slideTimer = setInterval(() => {
+    currentSlide.value++
+    // 복제본(마지막)에 도달하면 transition 끝난 후 즉시 0으로 리셋
+    if (currentSlide.value === heroImages.length) {
+      setTimeout(() => {
+        noTransition.value = true
+        currentSlide.value = 0
+        // 리플로우 후 transition 복원
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            noTransition.value = false
+          })
+        })
+      }, 1000) // transition 시간과 동일
+    }
+  }, 3000)
+})
+
+onUnmounted(() => {
+  clearInterval(slideTimer)
 })
 
 function decodeJwtPayload(token) {
@@ -205,12 +290,12 @@ async function fetchProperties() {
   page.value = 0
   try {
     const params = buildSearchParams()
-    const useSearch = searchKeyword.value || selectedType.value || selectedStatus.value
-    const endpoint = useSearch ? '/api/v1/properties/search' : '/api/v1/properties'
+    const endpoint = '/api/properties/v1'
     const res = await fetch(`${endpoint}?${params}`)
     const json = await res.json()
     if (json.success && json.data) {
-      properties.value = json.data.content || []
+      const items = json.data.content || []
+      properties.value = dedupeMainItems(items.map(normalizeMainItem))
       hasNext.value = json.data.hasNext || false
     }
   } catch {
@@ -226,11 +311,12 @@ async function loadMore() {
   try {
     const params = buildSearchParams()
     const useSearch = searchKeyword.value || selectedType.value || selectedStatus.value
-    const endpoint = useSearch ? '/api/v1/properties/search' : '/api/v1/properties'
+    const endpoint = useSearch ? '/api/properties/v1/search' : '/api/properties/v1'
     const res = await fetch(`${endpoint}?${params}`)
     const json = await res.json()
     if (json.success && json.data) {
-      properties.value.push(...(json.data.content || []))
+      const items = (json.data.content || []).map(normalizeMainItem)
+      properties.value = dedupeMainItems([...properties.value, ...items])
       hasNext.value = json.data.hasNext || false
     }
   } catch {
@@ -282,6 +368,39 @@ function badgeClass(status) {
   }
 }
 
+function normalizeMainItem(item) {
+  if (!item?.auction) return item
+  if (item.auction.status !== 'CANCELLED') return item
+  return {
+    ...item,
+    auction: null
+  }
+}
+
+function dedupeMainItems(items) {
+  const byId = new Map()
+  for (const item of items) {
+    const key = item?.id
+    if (!key) continue
+    const prev = byId.get(key)
+    if (!prev || auctionPriority(item?.auction?.status) > auctionPriority(prev?.auction?.status)) {
+      byId.set(key, item)
+    }
+  }
+  return Array.from(byId.values())
+}
+
+function auctionPriority(status) {
+  const map = {
+    OPEN: 5,
+    SCHEDULED: 4,
+    CLOSED: 3,
+    FAILED: 2,
+    CANCELLED: 1,
+  }
+  return map[status] || 0
+}
+
 function formatPrice(price) {
   if (!price) return ''
   const num = Number(price)
@@ -295,6 +414,30 @@ function formatPrice(price) {
   }
   return `${num.toLocaleString()}원`
 }
+
+function goToAuction(auctionId) {
+  window.location.href = `/auction-detail.html?id=${auctionId}`
+}
+
+const sidebarOpen = ref(false)
+
+function toggleSidebar() {
+  sidebarOpen.value = true
+}
+
+function closeSidebar() {
+  sidebarOpen.value = false
+}
+
+function getDetailLink(item) {
+  if (item.auction && item.auction.status === 'OPEN') {
+    return `/auction-property-detail?propertyId=${item.id}`
+  }
+
+  // 경매중이 아닐 때 기존 매물 상세 TODO 아직 없음
+  return `/property-detail.html?propertyId=${item.id}`
+}
+
 </script>
 
 <style scoped>
@@ -314,6 +457,24 @@ function formatPrice(price) {
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px; /* 햄버거와 로고 간격 */
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.header-nav {
+  display: flex;
+  align-items: center;
+  gap: 16px;
 }
 .logo {
   font-size: 22px;
@@ -358,12 +519,176 @@ function formatPrice(price) {
   color: var(--color-text);
 }
 
+/* ---------- 햄버거 버튼 ---------- */
+.menu-btn {
+  background: none;
+  border: none;
+  font-size: 20px;
+  margin-right: 12px;
+  cursor: pointer;
+}
+
+/* Overlay */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(17, 24, 39, 0.35);
+  backdrop-filter: blur(2px);
+  z-index: 150;
+}
+
+/* Sidebar */
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: -280px;
+  width: 260px;
+  height: 100%;
+  background: #ffffff;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  border-top-right-radius: 20px;
+  border-bottom-right-radius: 20px;
+  transition: left 0.35s cubic-bezier(.4,.0,.2,1);
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar.open {
+  left: 0;
+}
+
+/* Header */
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 22px 20px;
+  font-weight: 700;
+  font-size: 16px;
+  border-bottom: 1px solid #eef2f7;
+}
+
+.close-btn {
+  border: none;
+  background: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: #94a3b8;
+}
+
+/* Navigation */
+.sidebar-nav {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  font-weight: 600;
+  color: #334155;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.sidebar-link:hover {
+  background: rgba(49,130,246,0.08);
+  color: #2563eb;
+}
+
+.icon {
+  font-size: 16px;
+  filter: grayscale(100%);
+  opacity: 0.8;
+  transition: all 0.2s;
+}
+
+.sidebar-link:hover .icon {
+  filter: none;
+  opacity: 1;
+}
+
+/* Divider */
+.sidebar-divider {
+  height: 1px;
+  background: #eef2f7;
+  margin: 18px 0;
+}
+
+/* User area */
+.sidebar-user-area {
+  padding: 20px;
+  border-top: 1px solid #eef2f7;
+}
+
+.sidebar-auth {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.sidebar-user {
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: #0f172a;
+}
+
+.sidebar-logout {
+  background: rgba(239,68,68,0.08);
+  border: none;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-weight: 600;
+  color: #ef4444;
+  cursor: pointer;
+  width: 100%;
+  transition: 0.2s;
+}
+
+.sidebar-logout:hover {
+  background: rgba(239,68,68,0.15);
+}
+
+
 /* ---------- 히어로 ---------- */
 .hero {
-  background: linear-gradient(135deg, #3182f6 0%, #1b64da 100%);
+  position: relative;
   padding: 64px 24px;
+  overflow: hidden;
+}
+.hero-track {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: flex;
+  width: 100%;
+  height: 100%;
+  transition: transform 1s ease-in-out;
+}
+.hero-track.no-transition {
+  transition: none;
+}
+.hero-slide {
+  flex: 0 0 100%;
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+}
+.hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(17, 24, 39, 0.55);
+  z-index: 1;
 }
 .hero-inner {
+  position: relative;
+  z-index: 2;
   max-width: 640px;
   margin: 0 auto;
   text-align: center;
@@ -565,6 +890,22 @@ function formatPrice(price) {
   font-size: 18px;
   font-weight: 800;
   color: var(--color-text);
+}
+.btn-auction {
+  display: inline-block;
+  margin-top: 10px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  background: #2eb67d;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.btn-auction:hover {
+  background: #259d6c;
 }
 
 /* ---------- 더보기 ---------- */

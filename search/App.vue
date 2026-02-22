@@ -1,23 +1,5 @@
 <template>
-  <div class="page">
-    <!-- 헤더 -->
-    <header class="header">
-      <div class="header-inner">
-        <a href="/budongbudong" class="logo">부동부동</a>
-        <nav class="header-nav">
-          <a href="/search" class="nav-link active">매물 검색</a>
-          <template v-if="isLoggedIn">
-            <a href="/mypage" class="btn-text">마이페이지</a>
-            <span class="user-greeting">{{ userName }}님</span>
-            <button class="btn-text" @click="logout">로그아웃</button>
-          </template>
-          <template v-else>
-            <a href="/signin" class="btn-text">로그인</a>
-            <a href="/signup" class="btn-header-primary">회원가입</a>
-          </template>
-        </nav>
-      </div>
-    </header>
+  <AppLayout>
 
     <div class="search-layout">
       <!-- 사이드바 필터 -->
@@ -27,14 +9,14 @@
           <button class="btn-reset" @click="resetFilters">초기화</button>
         </div>
 
-        <!-- 단지명 검색 -->
+        <!-- 건물명 검색 -->
         <div class="filter-block">
-          <label class="filter-title">단지명 검색</label>
+          <label class="filter-title">건물명 검색</label>
           <input
             v-model="filters.name"
             type="text"
             class="form-input"
-            placeholder="단지명으로 검색"
+            placeholder="건물명으로 검색"
             @keyup.enter="doSearch"
           />
         </div>
@@ -161,8 +143,8 @@
             검색 결과 <strong>{{ totalText }}</strong>
           </p>
           <div class="sort-group">
-            <select v-model="sortOption" class="sort-select" @change="doSearch">
-              <option value="newest">최신순</option>
+            <select v-model="sortOption" class="sort-select" @change="changeSort">
+            <option value="newest">최신순</option>
               <option value="priceAsc">낮은 가격순</option>
               <option value="priceDesc">높은 가격순</option>
             </select>
@@ -190,42 +172,63 @@
         <!-- 매물 리스트 -->
         <div v-else class="property-list">
           <a
-            v-for="item in properties"
-            :key="item.id"
-            :href="'/api/v1/properties/' + item.id"
-            class="list-card"
+              v-for="item in properties"
+              :key="item.id"
+              :href="getDetailUrl(item)"
+              class="list-card"
           >
             <div class="list-thumb">
               <img
-                v-if="item.thumbnailImage"
-                :src="item.thumbnailImage"
-                :alt="item.name"
-                class="thumb-img"
+                  v-if="item.thumbnailImage"
+                  :src="item.thumbnailImage"
+                  :alt="item.name"
+                  class="thumb-img"
               />
               <div v-else class="thumb-placeholder">&#x1F3E2;</div>
-              <span v-if="item.auction" class="badge" :class="badgeClass(item.auction.status)">
-                {{ statusLabel(item.auction.status) }}
-              </span>
             </div>
+
             <div class="list-body">
-              <div class="list-top">
-                <span class="list-type">{{ typeLabel(item.type) }}</span>
-              </div>
               <h3 class="list-name">{{ item.name }}</h3>
+
               <p class="list-address">{{ item.address }}</p>
-              <div class="list-meta">
-                <span v-if="item.supplyArea">공급 {{ item.supplyArea }}m&sup2;</span>
-                <span v-if="item.privateArea" class="meta-dot">전용 {{ item.privateArea }}m&sup2;</span>
+
+              <!-- 🔥 태그 위치 -->
+              <div class="list-tags">
+                <span class="tag-type">
+                  {{ typeLabel(item.type) }}
+                </span>
+
+                <span
+                    v-if="item.auction"
+                    class="tag-status"
+                    :class="badgeClass(item.auction.status)"
+                >
+                  {{ statusLabel(item.auction.status) }}
+                </span>
               </div>
-              <p v-if="item.description" class="list-desc">{{ item.description }}</p>
-              <div v-if="item.auction" class="list-bottom">
-                <span class="list-price">{{ formatPrice(item.auction.startPrice) }}</span>
-                <span v-if="item.auction.startedAt" class="list-date">
+
+              <p v-if="item.description" class="list-desc">
+                {{ item.description }}
+              </p>
+              <div class="list-bottom">
+                <div class="price-block">
+                  <span class="list-price-main">
+                    실거래가 {{ formatPrice(item.price) }}
+                  </span>
+                  <span
+                      v-if="item.auction"
+                      class="list-auction-price"
+                  >
+                    경매 시작가 {{ formatPrice(item.auction.startPrice) }}
+                  </span>
+                </div>
+                <span v-if="item.auction?.startedAt" class="list-date">
                   {{ formatDate(item.auction.startedAt) }}
                 </span>
               </div>
             </div>
           </a>
+
         </div>
 
         <!-- 더보기 -->
@@ -236,11 +239,12 @@
         </div>
       </main>
     </div>
-  </div>
+  </AppLayout>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import AppLayout from "../components/AppLayout.vue";
 
 const propertyTypes = [
   { label: '전체', value: '' },
@@ -252,8 +256,8 @@ const propertyTypes = [
 const auctionStatuses = [
   { label: '전체', value: '' },
   { label: '경매 예정', value: 'SCHEDULED' },
-  { label: '진행 중', value: 'OPEN' },
-  { label: '종료', value: 'CLOSED' },
+  { label: '경매 중', value: 'OPEN' },
+  { label: '경매 종료', value: 'CLOSED' },
 ]
 
 const pricePresets = [
@@ -284,11 +288,7 @@ const page = ref(0)
 const totalCount = ref(0)
 const isLoggedIn = ref(false)
 const userName = ref('')
-
-const totalText = computed(() => {
-  if (properties.value.length === 0) return '0건'
-  return `${properties.value.length}건${hasNext.value ? '+' : ''}`
-})
+const totalText = computed(() => `${totalCount.value}건`)
 
 const activeTags = computed(() => {
   const tags = []
@@ -360,6 +360,7 @@ function parseUrlParams() {
 function buildParams() {
   const params = new URLSearchParams()
   const f = filters.value
+
   if (f.name) params.set('name', f.name)
   if (f.address) params.set('address', f.address)
   if (f.type) params.set('type', f.type)
@@ -368,9 +369,24 @@ function buildParams() {
   if (f.maxPrice) params.set('maxPrice', f.maxPrice)
   if (f.migrateDate) params.set('migrateDate', f.migrateDate)
   if (f.builtYear) params.set('builtYear', f.builtYear)
+
+  if (sortOption.value === 'priceAsc') {
+    params.set('sort', 'price,asc')
+  } else if (sortOption.value === 'priceDesc') {
+    params.set('sort', 'price,desc')
+  } else {
+    params.set('sort', 'id,desc')
+  }
+
   params.set('page', String(page.value))
-  params.set('size', '20')
+  params.set('size', '10')
+
   return params
+}
+
+function changeSort() {
+  page.value = 0
+  doSearch()
 }
 
 function updateUrl() {
@@ -394,12 +410,14 @@ async function doSearch() {
   updateUrl()
   try {
     const params = buildParams()
-    const res = await fetch(`/api/v1/properties/search?${params}`)
+    const res = await fetch(`/api/properties/v1/search?${params}`)
     const json = await res.json()
     if (json.success && json.data) {
       properties.value = json.data.content || []
-      hasNext.value = json.data.hasNext || false
+      totalCount.value = json.data.totalElements || 0
+      hasNext.value = (page.value + 1) < json.data.totalPages
     }
+
   } catch {
     properties.value = []
   } finally {
@@ -412,12 +430,14 @@ async function loadMore() {
   page.value++
   try {
     const params = buildParams()
-    const res = await fetch(`/api/v1/properties/search?${params}`)
+    const res = await fetch(`/api/properties/v1/search?${params}`)
     const json = await res.json()
     if (json.success && json.data) {
       properties.value.push(...(json.data.content || []))
-      hasNext.value = json.data.hasNext || false
+      totalCount.value = json.data.totalElements || 0
+      hasNext.value = (page.value + 1) < json.data.totalPages
     }
+
   } catch {
     /* ignore */
   } finally {
@@ -479,8 +499,10 @@ function badgeClass(status) {
 }
 
 function formatPrice(price) {
-  if (!price) return ''
-  const num = Number(price)
+  if (price === null || price === undefined) return ''
+
+  const num = Math.floor(Number(price))
+
   if (num >= 100000000) {
     const eok = Math.floor(num / 100000000)
     const man = Math.floor((num % 100000000) / 10000)
@@ -492,11 +514,25 @@ function formatPrice(price) {
   return `${num.toLocaleString()}원`
 }
 
+
 function formatDate(dateStr) {
   if (!dateStr) return ''
   const d = new Date(dateStr)
   return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`
 }
+
+function getDetailUrl(item) {
+  const isOpen = item.auction && item.auction.status === 'OPEN'
+
+  if (isOpen) {
+    return `/auction-property-detail?propertyId=${item.id}`
+  }
+
+  return `/property-detail?id=${item.id}`
+}
+
+
+
 </script>
 
 <style scoped>
@@ -575,7 +611,7 @@ function formatDate(dateStr) {
 
 /* ---------- 사이드바 ---------- */
 .sidebar {
-  width: 300px;
+  width: 375px;
   flex-shrink: 0;
   border-right: 1px solid var(--color-border);
   padding: 24px;
@@ -768,18 +804,19 @@ function formatDate(dateStr) {
   text-decoration: none;
   color: inherit;
   transition: border-color 0.2s, box-shadow 0.2s;
+  height: 190px;
 }
+
+.list-thumb {
+  width: 240px;
+  height: 100%;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
 .list-card:hover {
   border-color: var(--color-primary);
   box-shadow: 0 4px 16px rgba(49, 130, 246, 0.08);
-}
-.list-thumb {
-  position: relative;
-  width: 240px;
-  min-height: 180px;
-  flex-shrink: 0;
-  background: var(--color-input-bg);
-  overflow: hidden;
 }
 .thumb-img {
   width: 100%;
@@ -857,8 +894,8 @@ function formatDate(dateStr) {
 .list-bottom {
   margin-top: auto;
   display: flex;
-  align-items: baseline;
-  gap: 12px;
+  justify-content: space-between;
+  align-items: flex-end;
 }
 .list-price {
   font-size: 20px;
@@ -910,6 +947,64 @@ function formatDate(dateStr) {
   opacity: 0.5;
   cursor: not-allowed;
 }
+.list-tags {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+  margin-bottom: 8px;
+}
+
+.tag-type {
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  background: #eaf3ff;
+  color: var(--color-primary);
+  border-radius: 16px;
+}
+
+.tag-status {
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 16px;
+}
+
+.badge-scheduled {
+  background: #f2f4f6;
+  color: #6b7684;
+}
+
+.badge-open {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.badge-closed {
+  background: #ffeef0;
+  color: var(--color-error);
+}
+
+.price-block {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 52px;
+}
+
+.list-price-main {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.list-auction-price {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-primary);
+  opacity: 0.7;
+}
+
 
 /* ---------- 반응형 ---------- */
 @media (max-width: 768px) {
@@ -925,13 +1020,23 @@ function formatDate(dateStr) {
   }
   .list-card {
     flex-direction: column;
+    min-height: 180px;
   }
   .list-thumb {
+    width: 240px;
+    height: 80px;
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+  .thumb-img {
     width: 100%;
-    height: 200px;
+    height: 100%;
+    object-fit: cover;
+    display: block;     /* 🔥 inline-img 여백 제거 */
   }
   .list-body {
     padding: 16px;
   }
+
 }
 </style>

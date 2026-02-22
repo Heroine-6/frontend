@@ -5,20 +5,47 @@ import { resolve } from 'path'
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
-  const backendHost = env.VITE_BACKEND_HOST || 'localhost'
-  console.log('backendHost:', backendHost)
+  const mainServer = env.VITE_MAIN_SERVER || 'http://localhost:8080'
+  const chatServer = env.VITE_CHAT_SERVER || 'http://localhost:8080'
 
   return {
-    plugins: [vue()],
+    plugins: [
+      vue(),
+      {
+        name: 'kakao-oauth-redirect',
+        configureServer(server) {
+          server.middlewares.use((req, res, next) => {
+            if (req.url?.startsWith('/login/oauth2/code/kakao')) {
+              const query = req.url.split('?')[1] || ''
+              res.writeHead(302, { Location: `/signin.html${query ? '?' + query : ''}` })
+              res.end()
+              return
+            }
+            next()
+          })
+        }
+      }
+    ],
     server: {
       proxy: {
+        '/api/v2/chats': {
+          target: chatServer,
+          changeOrigin: true,
+          secure: false
+        },
+        '/ws': {
+          target: chatServer,
+          changeOrigin: true,
+          secure: false,
+          ws: true
+        },
         '/api': {
-          target: 'http://localhost:8080',
+          target: mainServer,
           changeOrigin: true,
           secure: false
         },
         '/batch-api': {
-          target: 'http://localhost:8081',
+          target: chatServer,
           changeOrigin: true,
           secure: false
         }
@@ -36,7 +63,17 @@ export default defineConfig(({ mode }) => {
           payments: resolve(__dirname, 'payments.html'),
           'market-prices': resolve(__dirname, 'market-prices.html'),
           'my-properties': resolve(__dirname, 'my-properties.html'),
-          'create-auction': resolve(__dirname, 'create-auction.html')
+          'create-auction': resolve(__dirname, 'create-auction.html'),
+          'kakao-complete': resolve(__dirname, 'kakao-complete.html'),
+          'create-property': resolve(__dirname, 'create-property.html'),
+          'payment-checkout': resolve(__dirname, 'payment-checkout.html'),
+          'payment-success': resolve(__dirname, 'payment-success.html'),
+          'payment-fail': resolve(__dirname, 'payment-fail.html'),
+          chat: resolve(__dirname, 'chat.html'),
+          'auction-detail': resolve(__dirname, 'auction-detail.html'),
+          'auction-property-detail': resolve(__dirname, 'auction-property-detail.html'),
+          'bid-register': resolve(__dirname, 'bid-register.html'),
+          'property-detail': resolve(__dirname, 'property-detail.html')
         }
       }
     }

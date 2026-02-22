@@ -1,18 +1,5 @@
 <template>
-  <div class="page">
-    <!-- 헤더 -->
-    <header class="header">
-      <div class="header-inner">
-        <a href="/" class="logo">부동부동</a>
-        <nav class="header-nav">
-          <a href="/search" class="btn-text">매물 검색</a>
-          <a href="/mypage" class="btn-text">마이페이지</a>
-          <span class="user-greeting">{{ userName }}님</span>
-          <button class="btn-text" @click="logout">로그아웃</button>
-        </nav>
-      </div>
-    </header>
-
+  <AppLayout>
     <!-- 입찰 내역 컨텐츠 -->
     <div class="bids-container">
       <div class="bids-inner">
@@ -56,12 +43,13 @@
         </div>
       </div>
     </div>
-  </div>
+  </AppLayout>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
 import { getMyBids } from '../shared/api.js'
+import AppLayout from "../components/AppLayout.vue";
 
 const userName = ref('사용자')
 const loading = ref(false)
@@ -123,15 +111,17 @@ function bidStatusLabel(status) {
     OUTBID: '입찰 실패',
     PENDING: '대기중',
     ACCEPTED: '낙찰',
-    REJECTED: '유찰'
+    REJECTED: '유찰',
+    WON: '낙찰',
+    LOST: '낙찰 실패'
   }
   return labels[status] || status
 }
 
 function bidStatusClass(status) {
   return {
-    'badge-success': status === 'WINNING' || status === 'ACCEPTED',
-    'badge-error': status === 'OUTBID' || status === 'REJECTED',
+    'badge-success': status === 'WINNING' || status === 'ACCEPTED' || status === 'WON',
+    'badge-error': status === 'OUTBID' || status === 'REJECTED' || status === 'LOST',
     'badge-warning': status === 'PENDING'
   }
 }

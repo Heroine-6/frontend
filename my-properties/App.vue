@@ -1,19 +1,5 @@
 <template>
-  <div class="page">
-    <!-- 헤더 -->
-    <header class="header">
-      <div class="header-inner">
-        <a href="/" class="logo">부동부동</a>
-        <nav class="header-nav">
-          <a href="/search" class="btn-text">매물 검색</a>
-          <a href="/market-prices" class="btn-text">주변 시세</a>
-          <a href="/mypage" class="btn-text">마이페이지</a>
-          <span class="user-greeting">{{ userName }}님</span>
-          <button class="btn-text" @click="logout">로그아웃</button>
-        </nav>
-      </div>
-    </header>
-
+    <AppLayout>
     <!-- 권한 없음 -->
     <div v-if="!authorized" class="access-denied">
       <p class="denied-icon">🔒</p>
@@ -218,6 +204,12 @@
                   >
                     경매 등록
                   </button>
+                  <button
+                    class="btn-action btn-action-outline"
+                    @click="viewDetail(item)"
+                  >
+                    매물 상세보기
+                  </button>
                   <template v-if="item.auction">
                     <button
                       v-if="item.auction.status === 'SCHEDULED'"
@@ -228,9 +220,9 @@
                     </button>
                     <button
                       class="btn-action btn-action-outline"
-                      @click="viewDetail(item.id)"
+                      @click="viewAuctionDetail(item.auction)"
                     >
-                      상세보기
+                      경매 상세보기
                     </button>
                   </template>
                 </div>
@@ -247,12 +239,13 @@
         </div>
       </main>
     </div>
-  </div>
+    </AppLayout>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { getMyProperties, cancelAuction as cancelAuctionAPI } from '../shared/api.js'
+import AppLayout from "../components/AppLayout.vue";
 
 // ====== 상수 ======
 const propertyTypes = [
@@ -294,7 +287,7 @@ const filters = ref({
 
 // ====== 필터링 ======
 const filteredProperties = computed(() => {
-  let list = [...properties.value]
+  let list = mergePropertyEntries(properties.value)
   const f = filters.value
 
   if (f.name) {
@@ -440,12 +433,72 @@ async function cancelAuction(item) {
   }
 }
 
-function viewDetail(propertyId) {
-  window.location.href = `/api/v1/properties/${propertyId}`
+function viewDetail(item) {
+  // 경매가 있고, 경매 상태가 OPEN일 때만 경매 상세로 이동
+  if (item.auction && item.auction.status === 'OPEN') {
+    window.location.href = `/auction-property-detail?propertyId=${item.id}`
+  } else {
+    window.location.href = `/property-detail.html?propertyId=${item.id}`
+  }
+}
+
+function viewAuctionDetail(auction) {
+  const type = auction.type || 'ENGLISH'
+  window.location.href = `/auction-detail.html?id=${auction.id}&type=${type}`
+}
+
+function mergePropertyEntries(items) {
+  const byId = new Map()
+
+  for (const item of items) {
+    const key = item?.id
+    if (!key) continue
+
+    const prev = byId.get(key)
+    if (!prev) {
+      byId.set(key, { ...item })
+      continue
+    }
+
+    const next = {
+      ...prev,
+      auction: pickPreferredAuction(prev.auction, item.auction)
+    }
+
+    // 기본 정보는 비어있지 않은 최신 값으로 보정
+    for (const k of ['name', 'address', 'thumbnailImage', 'type', 'builtYear', 'floor', 'supplyArea', 'privateArea']) {
+      if (!next[k] && item[k]) next[k] = item[k]
+    }
+
+    byId.set(key, next)
+  }
+
+  return Array.from(byId.values())
+}
+
+function pickPreferredAuction(a, b) {
+  const pa = auctionPriority(a?.status)
+  const pb = auctionPriority(b?.status)
+  if (pb > pa) return b
+
+  const ta = new Date(a?.startedAt || 0).getTime()
+  const tb = new Date(b?.startedAt || 0).getTime()
+  return tb > ta ? b : a
+}
+
+function auctionPriority(status) {
+  const map = {
+    OPEN: 5,
+    SCHEDULED: 4,
+    CLOSED: 3,
+    FAILED: 2,
+    CANCELLED: 1
+  }
+  return map[status] || 0
 }
 
 function goRegister() {
-  alert('매물 등록 페이지 (구현 예정)')
+  window.location.href = '/create-property.html'
 }
 
 // ====== 유틸 ======
@@ -814,6 +867,8 @@ function logout() {
 .card-tags {
   display: flex;
   gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
 }
 .tag {
   padding: 4px 10px;

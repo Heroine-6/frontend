@@ -35,73 +35,120 @@ async function request(url, options = {}) {
     throw new Error('인증이 만료되었습니다.')
   }
 
-  const data = await res.json()
-  if (!res.ok || !data.success) {
-    throw new Error(data.message || '요청에 실패했습니다.')
+  // 204 No Content
+  if (res.status === 204) {
+    return { success: true, data: null }
   }
-  return data
+
+    const data = await res.json()
+    if (!res.ok || !data.success) {
+        // 서버가 내려준 구조 그대로 던진다
+        throw {
+            errorCode: data.errorCode,
+            message: data.message,
+            status: res.status
+        }
+    }
+    return data
+
 }
 
 // ==================== 인증 API ====================
 
 export function authSignIn({ email, password }) {
-  return request('/api/v1/auth/signin', {
+  return request('/api/auth/v1/signin', {
     method: 'POST',
     body: { email, password }
   })
 }
 
+export function verifyEmail(email) {
+  return request('/api/auth/v1/verify-email', {
+    method: 'POST',
+    body: { email }
+  })
+}
+
 export function authSignUp({ email, name, password, phone, address, role }) {
-  return request('/api/v1/auth/signup', {
+  return request('/api/auth/v1/signup', {
     method: 'POST',
     body: { email, name, password, phone, address, role }
   })
 }
 
 export function smsSend(toNumber) {
-  return request('/api/v1/auth/send', {
+  return request('/api/auth/v1/send', {
     method: 'POST',
     body: { toNumber }
   })
 }
 
 export function smsVerify(toNumber, code) {
-  return request('/api/v1/auth/verify', {
+  return request('/api/auth/v1/verify', {
     method: 'POST',
     body: { toNumber, code }
   })
 }
 
 export function authRefresh(refreshToken) {
-  return request('/api/v1/auth/refresh', {
+  return request('/api/auth/v1/refresh', {
     method: 'POST',
     body: { refreshToken }
+  })
+}
+
+// ==================== 카카오 OAuth ====================
+
+export async function kakaoLogin(code) {
+  const res = await fetch(`/api/auth/v2/kakao?code=${encodeURIComponent(code)}`)
+  const data = await res.json()
+  if (!res.ok || !data.success) {
+    throw new Error(data.message || '카카오 로그인에 실패했습니다.')
+  }
+  return data
+}
+
+export function completeKakaoProfile(name, phone, address) {
+  const token = localStorage.getItem('accessToken')
+  return fetch('/api/auth/v2/kakao/complete', {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': token,
+    },
+    body: JSON.stringify({ name, phone, address }),
+  }).then(async res => {
+    const data = await res.json()
+    if (!res.ok || !data.success) {
+      throw new Error(data.message || '프로필 저장에 실패했습니다.')
+    }
+    return data
   })
 }
 
 // ==================== 부동산 API ====================
 
 export function getAllProperties(page = 0, size = 10) {
-  return request(`/api/v1/properties?page=${page}&size=${size}`)
+  return request(`/api/properties/v1?page=${page}&size=${size}`)
 }
 
 export function searchProperties(params) {
   const queryString = new URLSearchParams(params).toString()
-  return request(`/api/v1/properties/search?${queryString}`)
+  return request(`/api/properties/v1/search?${queryString}`)
 }
 
 export function getPropertyDetail(propertyId) {
-  return request(`/api/v1/properties/${propertyId}`)
+  return request(`/api/properties/v1/${propertyId}`)
 }
 
 export function getMyProperties(page = 0, size = 10) {
-  return request(`/api/v1/properties/my?page=${page}&size=${size}`, {
+  return request(`/api/properties/v1/my?page=${page}&size=${size}`, {
     requireAuth: true
   })
 }
 
 export function createProperty(propertyData) {
-  return request('/api/v1/properties', {
+  return request('/api/properties/v1', {
     method: 'POST',
     body: propertyData,
     requireAuth: true
@@ -109,7 +156,7 @@ export function createProperty(propertyData) {
 }
 
 export function updateProperty(propertyId, propertyData) {
-  return request(`/api/v1/properties/${propertyId}`, {
+  return request(`/api/properties/v1/${propertyId}`, {
     method: 'PATCH',
     body: propertyData,
     requireAuth: true
@@ -117,7 +164,7 @@ export function updateProperty(propertyId, propertyData) {
 }
 
 export function deleteProperty(propertyId) {
-  return request(`/api/v1/properties/${propertyId}`, {
+  return request(`/api/properties/v1/${propertyId}`, {
     method: 'DELETE',
     requireAuth: true
   })
@@ -177,11 +224,24 @@ export function getMyBids(page = 0, size = 10, status = null) {
   })
 }
 
+export function createDutchBid(auctionId) {
+  return request(`/api/bids/v3/auctions/dutch/${auctionId}`, {
+    method: 'POST',
+    requireAuth: true
+  })
+}
+
 // ==================== 실거래가 API ====================
+
+export function compareWithMarket(auctionId, inputPrice) {
+  const params = new URLSearchParams({ distanceKm: '1.0', size: '50' })
+  if (inputPrice) params.append('inputPrice', inputPrice)
+  return request(`/api/real-deals/v2/compare/${auctionId}?${params}`)
+}
 
 export function getNearbyRealDeals(params) {
   const queryString = new URLSearchParams(params).toString()
-  return request(`/api/v2/real-deals/nearby?${queryString}`)
+  return request(`/api/real-deals/v2/nearby?${queryString}`)
 }
 
 // ==================== 지역 데이터 (정적 JSON) ====================
@@ -219,11 +279,25 @@ export function getMarketPrices(params) {
   const address = [sido, gugun, dong].filter(Boolean).join(' ')
   const query = { address, size: 50 }
   if (type) query.propertyType = type
-  return request(`/api/v2/real-deals/nearby?${new URLSearchParams(query).toString()}`)
+  return request(`/api/real-deals/v2/nearby?${new URLSearchParams(query).toString()}`)
 }
 
 // ==================== 결제 API ====================
 
+// 마이페이지 결제 대상 경매 목록 조회 (계약금/잔금)
+export function getMyPaymentAuctions(type) {
+  return request(`/api/payments/v2/my?type=${type}`, {
+    requireAuth: true
+  })
+}
+
+// 경매별 결제 상세 정보 조회
+export function getPaymentAuctionInfo(auctionId, type) {
+    return request(
+        `/api/payments/v2/auctions/${auctionId}/info?type=${type}`,
+        { requireAuth: true }
+    )
+}
 export function createPayment(auctionId, type) {
   return request(`/api/payments/v2/auctions/${auctionId}`, {
     method: 'POST',
@@ -267,7 +341,38 @@ export function getMyNotifications(page = 0, size = 10) {
   })
 }
 
+// ==================== 이미지 Presigned URL ====================
+
+export async function getPresignedUrls(files) {
+  const fileInfos = files.map(file => ({
+    fileName: file.name,
+    contentType: file.type
+  }))
+  return request('/api/properties/v1/images/presign', {
+    method: 'POST',
+    body: { files: fileInfos },
+    requireAuth: true
+  })
+}
+
+export async function uploadFileToPresignedUrl(uploadUrl, file) {
+  const res = await fetch(uploadUrl, {
+    method: 'PUT',
+    headers: { 'Content-Type': file.type },
+    body: file
+  })
+  if (!res.ok) {
+    throw new Error(`이미지 업로드에 실패했습니다. (${res.status})`)
+  }
+}
+
 // ==================== 사용자 API ====================
+
+export function getMyProfile() {
+  return request('/api/users/v2/me', {
+    requireAuth: true
+  })
+}
 
 export function updateNotificationSettings(settings) {
   return request('/api/users/v2/notifications', {
@@ -276,3 +381,103 @@ export function updateNotificationSettings(settings) {
     requireAuth: true
   })
 }
+
+export function linkKakao(code, redirectUri) {
+  const params = new URLSearchParams({ code })
+  if (redirectUri) params.append('redirectUri', redirectUri)
+    return request(`/api/users/v2/kakao/link?${params.toString()}`, {
+      method: 'POST',
+      requireAuth: true
+  })
+}
+
+// ==================== 채팅 API ====================
+
+// 채팅 서버 전용 요청 함수 (Bearer 접두사 필요, 응답 형식이 다름)
+async function chatRequest(url, options = {}) {
+  const { method = 'GET', body, headers = {} } = options
+
+  const config = {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+      ...headers
+    }
+  }
+
+  const token = localStorage.getItem('accessToken')
+  if (token) {
+    config.headers['Authorization'] = token.startsWith('Bearer ') ? token : 'Bearer ' + token
+  }
+
+  if (body) {
+    config.body = JSON.stringify(body)
+  }
+
+  const res = await fetch(url, config)
+
+  if (res.status === 401) {
+    localStorage.removeItem('accessToken')
+    localStorage.removeItem('refreshToken')
+    alert('인증이 만료되었습니다. 다시 로그인해주세요.')
+    window.location.href = '/signin.html'
+    throw new Error('인증이 만료되었습니다.')
+  }
+
+  if (res.status === 204) {
+    return null
+  }
+
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({}))
+    throw new Error(errData.message || '채팅 요청에 실패했습니다.')
+  }
+
+  return res.json()
+}
+
+// 내 채팅방 목록 조회
+export function getChatRooms(page = 0, size = 20) {
+  return chatRequest(`/api/v2/chats/rooms?page=${page}&size=${size}`)
+}
+
+// 매물별 채팅방 존재 여부 확인 (존재하면 { roomId }, 없으면 null)
+export function findChatRoom(propertyId) {
+  return chatRequest(`/api/v2/chats/rooms/open/${propertyId}`)
+}
+
+// 첫 메시지 전송 + 채팅방 생성
+export function sendFirstMessage(propertyId, content) {
+  return chatRequest(`/api/v2/chats/messages/${propertyId}`, {
+    method: 'POST',
+    body: { content }
+  })
+}
+
+// 채팅 메시지 조회
+export function getChatMessages(roomId, page = 0, size = 30) {
+  return chatRequest(`/api/v2/chats/rooms/${roomId}/messages?page=${page}&size=${size}`)
+}
+export async function createDepositPayment(auctionId, bidAmount) {
+    const token = localStorage.getItem('accessToken')
+
+    const res = await fetch(`/api/payments/v2/auctions/${auctionId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `${token}`
+        },
+        body: JSON.stringify({
+            type: 'DEPOSIT'
+        })
+    })
+
+    if (!res.ok) {
+        const errorBody = await res.text()
+        console.error('결제 생성 실패 응답:', errorBody)
+        throw new Error(errorBody || '보증금 결제 생성 실패')
+    }
+
+    return res.json()
+}
+
